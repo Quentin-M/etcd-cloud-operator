@@ -1,0 +1,33 @@
+package: github.com/quentin-m/etcd-cloud-operator
+import:
+- package: github.com/aws/aws-sdk-go
+  version: ~1.12.2
+  subpackages:
+  - aws
+  - aws/ec2metadata
+  - aws/session
+  - service/autoscaling
+  - service/ec2
+  - service/s3
+  - service/s3/s3manager
+- package: github.com/coreos/etcd
+  version: ~3.2.8
+  subpackages:
+  - clientv3
+  - clientv3/concurrency
+  - embed
+  - etcdserver/api/v3rpc/rpctypes
+  - etcdserver/etcdserverpb
+  - pkg/transport
+  - pkg/types
+- package: github.com/coreos/pkg
+  version: ~3.0.0
+  subpackages:
+  - capnslog
+- package: github.com/sirupsen/logrus
+  version: ~1.0.3
+- package: gopkg.in/yaml.v2
+- package: github.com/golang/protobuf
+  version: 5a0f697c9ed9d68fef0116532c6e05cfeae00e55
+  subpackages:
+  - proto

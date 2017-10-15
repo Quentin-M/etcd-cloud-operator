@@ -1,0 +1,42 @@
+eco:
+  # The interval between each cluster verification by the operator.
+  check-interval: 30s
+  # The time after which, the member of an instance unseen for that duration,
+  # will be removed from the cluster.
+  unseen-instance-ttl: 60s
+  # Defines whether the operator will attempt to seed a new cluster from a
+  # snapshot after the managed cluster has lost quorum.
+  auto-disaster-recovery: true
+  # Configuration of the etcd instance.
+  etcd:
+    # The address that clients should use to connect to the etcd cluster (i.e.
+    # load balancer public address).
+    advertise-address:
+    # The directory where the etcd data is stored.
+    data-dir: /var/lib/etcd
+    # The TLS configuration for clients communication.
+    client-transport-security:
+      auto-tls: false
+      cert-file:
+      key-file:
+      trusted-ca-file:
+      client-cert-auth: false
+    # The TLS configuration for peers communication.
+    peer-transport-security:
+      auto-tls: true
+      cert-file:
+      key-file:
+      trusted-ca-file:
+      peer-client-cert-auth: false
+  # Configuration of the auto-scaling group provider.
+  asg:
+    provider: aws
+  # Configuration of the snapshot provider.
+  snapshot:
+    provider: s3
+    # The interval between each snapshot.
+    interval: 30m
+    # The time after which a backup has to be deleted.
+    ttl: 24h
+    # The bucket where snapshots are stored when using the S3 provider.
+    bucket: eco-kubernetes

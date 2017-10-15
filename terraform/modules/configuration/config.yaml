@@ -1,0 +1,22 @@
+eco:
+  check-interval: 15s
+  unseen-instance-ttl: ${unseen_instance_ttl}
+  auto-disaster-recovery: ${enable_auto_disaster_recovery}
+  etcd:
+    advertise-address: ${advertise_address}
+    data-dir: /var/lib/eco/etcd
+    client-transport-security:
+      auto-tls: false
+      cert-file: ${cert_file}
+      key-file: ${key_file}
+      trusted-ca-file: ${ca_file}
+      client-cert-auth: ${require_client_cert}
+    peer-transport-security:
+      auto-tls: true
+  asg:
+    provider: ${asg_provider}
+  snapshot:
+    provider: ${snapshot_provider}
+    interval: ${snapshot_interval}
+    ttl: ${snapshot_ttl}
+    bucket: ${snapshot_bucket}

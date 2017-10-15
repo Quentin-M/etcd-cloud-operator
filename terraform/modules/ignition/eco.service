@@ -1,0 +1,14 @@
+[Unit]
+Description=ECO Container
+After=docker.service
+Requires=docker.service
+
+[Service]
+TimeoutStartSec=0
+Restart=always
+ExecStartPre=-/usr/bin/docker stop eco
+ExecStartPre=-/usr/bin/docker rm eco
+ExecStart=/usr/bin/docker run --rm --name eco --net=host -v /var/lib/eco:/var/lib/eco -v /etc/eco:/etc/eco ${image} -config /etc/eco/config.yaml
+
+[Install]
+WantedBy=multi-user.target

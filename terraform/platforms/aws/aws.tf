@@ -74,6 +74,19 @@ resource "aws_security_group" "elb" {
   }
 }
 
+resource "aws_cloudwatch_metric_alarm" "elb" {
+  alarm_name = "${var.name}"
+
+  metric_name = "UnHealthyHostCount"
+  namespace   = "AWS/ELB"
+
+  comparison_operator = "GreaterThanOrEqualToThreshold"
+  threshold           = 1
+  statistic           = "Maximum"
+  period              = 60
+  evaluation_periods  = 5
+}
+
 locals {
   asg_provider        = "aws"
   snapshot_provider   = "s3"

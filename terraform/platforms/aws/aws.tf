@@ -27,7 +27,7 @@ resource "aws_elb" "clients" {
 
   internal                  = "${var.load_balancer_internal}"
   subnets                   = ["${data.aws_subnet.main.*.id}"]
-  security_groups           = ["${aws_security_group.elb.id}"]
+  security_groups           = ["${split(",", length(var.load_balancer_security_group_ids) > 0 ? join(",", var.load_balancer_security_group_ids) : aws_security_group.elb.id)}"]
   cross_zone_load_balancing = true
   idle_timeout              = 3600
 
@@ -52,6 +52,7 @@ resource "aws_elb" "clients" {
 }
 
 resource "aws_security_group" "elb" {
+  count  = "${length(var.load_balancer_security_group_ids) > 0 ? 0 : 1}"
   name   = "${var.name}-elb"
   vpc_id = "${data.aws_subnet.main.0.vpc_id}"
 

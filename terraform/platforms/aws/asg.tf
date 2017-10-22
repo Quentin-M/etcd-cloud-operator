@@ -70,7 +70,7 @@ resource "aws_launch_configuration" "main" {
   security_groups      = ["${aws_security_group.instances.id}"]
   iam_instance_profile = "${aws_iam_instance_profile.instances.arn}"
   user_data            = "${module.ignition.ignition}"
-  
+
   root_block_device {
     volume_size = "${var.instance_disk_size}"
   }
@@ -89,7 +89,7 @@ resource "aws_security_group" "instances" {
     from_port       = 2379
     to_port         = 2379
     protocol        = "tcp"
-    security_groups = ["${aws_security_group.elb.id}"]
+    security_groups = ["${aws_elb.clients.source_security_group_id}"]
     self            = true
   }
 

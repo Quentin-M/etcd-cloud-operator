@@ -33,6 +33,10 @@ variable "instance_ssh_key_name" {
   description = "Name of the SSH key to use (must be present on EC2)"
 }
 
+variable "associate_public_ips" {
+  description = "Defines whether public IPs should be assigned to the EC2 instances (mainly depends if public or private subnets are used)"
+}
+
 variable "subnets_ids" {
   description = "List of the subnet IDs to place the EC2 instances in (should span across AZs for availability)"
   type        = "list"

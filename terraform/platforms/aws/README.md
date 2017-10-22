@@ -29,11 +29,13 @@ instance_disk_size = "30"
 # Name of the SSH key to use (must be present on EC2).
 instance_ssh_key_name = "qmachu-local"
 
+# Defines whether public IPs should be assigned to the EC2 instances (mainly depends if public or private subnets are used).
+associate_public_ip_address = "true"
 # List of the subnet IDs to place the EC2 instances in (should span across AZs for availability).
 subnets_ids = ["subnet-f438f793", "subnet-d4bea38c"]
 # Defines whether the load balancer for etcd will be internet facing or internal.
 load_balancer_internal = "false"
-# List of the security group IDs to apply to the load balancer (ingress TCP 2379) (if empty, defaults to open to all)
+# List of the security group IDs to apply to the load balancer (ingress TCP 2379) (if empty, defaults to open to all).
 load_balancer_security_group_ids = []
 
 # Container image of ECO to use.
@@ -77,6 +79,7 @@ module "eco" {
   instance_disk_size    = "30"
   instance_ssh_key_name = "qmachu-local"
 
+  associate_public_ip_address      = "true"
   subnets_ids                      = ["subnet-f438f793", "subnet-d4bea38c"]
   load_balancer_internal           = "false"
   load_balancer_security_group_ids = []

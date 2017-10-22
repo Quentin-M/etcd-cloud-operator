@@ -71,6 +71,8 @@ resource "aws_launch_configuration" "main" {
   iam_instance_profile = "${aws_iam_instance_profile.instances.arn}"
   user_data            = "${module.ignition.ignition}"
 
+  associate_public_ip_address = "${var.associate_public_ips}"
+
   root_block_device {
     volume_size = "${var.instance_disk_size}"
   }

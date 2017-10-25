@@ -83,7 +83,7 @@ resource "aws_launch_configuration" "main" {
 }
 
 resource "aws_security_group" "instances" {
-  name   = "${var.name}-instances"
+  name   = "instances.${var.name}"
   vpc_id = "${var.vpc_id}"
 
   ingress {
@@ -106,10 +106,6 @@ resource "aws_security_group" "instances" {
     to_port     = 0
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  tags = {
-    "Name" = "${var.name}"
   }
 }
 

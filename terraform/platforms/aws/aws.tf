@@ -13,7 +13,7 @@
 // limitations under the License.
 
 resource "aws_s3_bucket" "backups" {
-  bucket = "${var.name}-backups"
+  bucket = "${var.name}"
   acl    = "private"
 }
 
@@ -44,10 +44,6 @@ resource "aws_elb" "clients" {
     target              = "TCP:2379"
     interval            = 15
   }
-
-  tags {
-    Name = "${var.name}"
-  }
 }
 
 resource "aws_security_group" "elb" {
@@ -55,7 +51,7 @@ resource "aws_security_group" "elb" {
   # REF: https://github.com/hashicorp/terraform/issues/4149
   #
   # count  = "${length(var.load_balancer_security_group_ids) > 0 ? 0 : 1}"
-  name   = "${var.name}-elb"
+  name   = "default.elb.${var.name}"
   vpc_id = "${var.vpc_id}"
 
   ingress {
@@ -70,10 +66,6 @@ resource "aws_security_group" "elb" {
     to_port     = 2379
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  tags = {
-    "Name" = "${var.name}-elb"
   }
 }
 

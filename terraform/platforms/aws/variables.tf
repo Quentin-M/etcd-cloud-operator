@@ -22,7 +22,6 @@ variable "size" {
 
 variable "instance_type" {
   description = "Type of the EC2 instances to launch"
-  default     = ""
 }
 
 variable "instance_disk_size" {

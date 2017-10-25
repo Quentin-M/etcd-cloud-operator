@@ -30,7 +30,7 @@ instance_disk_size = "30"
 instance_ssh_key_name = "qmachu-local"
 
 # Defines whether public IPs should be assigned to the EC2 instances (mainly depends if public or private subnets are used).
-associate_public_ip_address = "true"
+associate_public_ips = "true"
 # List of the subnet IDs to place the EC2 instances in (should span across AZs for availability).
 subnets_ids = ["subnet-f438f793", "subnet-d4bea38c"]
 # Defines whether the load balancer for etcd will be internet facing or internal.
@@ -70,7 +70,7 @@ relevant to your infrastructure:
 
 ```
 module "eco" {
-  source = "github.com/Quentin-M/etcd-cloud-operator/platforms/aws"
+  source = "github.com/Quentin-M/etcd-cloud-operator//terraform/platforms/aws"
 
   name = "eco-example"
   size = "3"

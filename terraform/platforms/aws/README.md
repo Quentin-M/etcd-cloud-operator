@@ -33,6 +33,8 @@ instance_ssh_key_name = "qmachu-local"
 associate_public_ips = "true"
 # List of the subnet IDs to place the EC2 instances in (should span across AZs for availability).
 subnets_ids = ["subnet-f438f793", "subnet-d4bea38c"]
+# ID of the VPC where the subnets are defined.
+vpc_id = "vpc-19f019"
 # Defines whether the load balancer for etcd will be internet facing or internal.
 load_balancer_internal = "false"
 # List of the security group IDs to apply to the load balancer (ingress TCP 2379) (if empty, defaults to open to all).
@@ -81,6 +83,7 @@ module "eco" {
 
   associate_public_ip_address      = "true"
   subnets_ids                      = ["subnet-f438f793", "subnet-d4bea38c"]
+  vpc_id                           = "vpc-19f019"
   load_balancer_internal           = "false"
   load_balancer_security_group_ids = []
 

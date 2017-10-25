@@ -38,7 +38,6 @@ data "aws_ami" "coreos" {
 
 resource "aws_autoscaling_group" "main" {
   name               = "${var.name}"
-  availability_zones = ["${data.aws_subnet.main.*.availability_zone}"]
 
   max_size         = "${var.size}"
   min_size         = "${var.size}"
@@ -48,7 +47,7 @@ resource "aws_autoscaling_group" "main" {
   health_check_grace_period = 120
   health_check_type         = "ELB"
 
-  vpc_zone_identifier  = ["${data.aws_subnet.main.*.id}"]
+  vpc_zone_identifier  = ["${var.subnets_ids}"]
   launch_configuration = "${aws_launch_configuration.main.name}"
 
   tags = [
@@ -85,7 +84,7 @@ resource "aws_launch_configuration" "main" {
 
 resource "aws_security_group" "instances" {
   name   = "${var.name}-instances"
-  vpc_id = "${data.aws_subnet.main.0.vpc_id}"
+  vpc_id = "${var.vpc_id}"
 
   ingress {
     from_port       = 2379

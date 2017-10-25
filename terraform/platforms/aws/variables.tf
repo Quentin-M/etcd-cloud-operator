@@ -41,6 +41,10 @@ variable "subnets_ids" {
   type        = "list"
 }
 
+variable "vpc_id" {
+  description = "ID of the VPC where the subnets are defined."
+}
+
 variable "load_balancer_internal" {
   description = "Defines whether the load balancer for etcd should be internet facing or internal"
 }

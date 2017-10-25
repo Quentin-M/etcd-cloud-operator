@@ -12,11 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-data "aws_subnet" "main" {
-  count = "${length(var.subnets_ids)}"
-  id    = "${element(var.subnets_ids, count.index)}"
-}
-
 resource "aws_s3_bucket" "backups" {
   bucket = "${var.name}-backups"
   acl    = "private"
@@ -26,8 +21,12 @@ resource "aws_elb" "clients" {
   name = "${var.name}"
 
   internal                  = "${var.load_balancer_internal}"
-  subnets                   = ["${data.aws_subnet.main.*.id}"]
-  security_groups           = ["${split(",", length(var.load_balancer_security_group_ids) > 0 ? join(",", var.load_balancer_security_group_ids) : aws_security_group.elb.id)}"]
+  subnets                   = ["${var.subnets_ids}"]
+  security_groups           = [
+    "${split(",", length(var.load_balancer_security_group_ids) > 0
+    ? join(",", var.load_balancer_security_group_ids)
+    : aws_security_group.elb.id)}"
+  ]
   cross_zone_load_balancing = true
   idle_timeout              = 3600
 
@@ -52,9 +51,12 @@ resource "aws_elb" "clients" {
 }
 
 resource "aws_security_group" "elb" {
-  count  = "${length(var.load_balancer_security_group_ids) > 0 ? 0 : 1}"
+  # ERR: aws_security_group.elb: value of 'count' cannot be computed
+  # REF: https://github.com/hashicorp/terraform/issues/4149
+  #
+  # count  = "${length(var.load_balancer_security_group_ids) > 0 ? 0 : 1}"
   name   = "${var.name}-elb"
-  vpc_id = "${data.aws_subnet.main.0.vpc_id}"
+  vpc_id = "${var.vpc_id}"
 
   ingress {
     from_port   = 2379
@@ -71,7 +73,7 @@ resource "aws_security_group" "elb" {
   }
 
   tags = {
-    "Name" = "${var.name}"
+    "Name" = "${var.name}-elb"
   }
 }
 

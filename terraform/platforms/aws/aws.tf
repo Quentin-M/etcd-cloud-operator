@@ -18,7 +18,7 @@ resource "aws_s3_bucket" "backups" {
 }
 
 resource "aws_elb" "clients" {
-  name = "${var.name}"
+  name = "${replace(var.name, "/[^a-zA-Z0-9-]/", "-")}"
 
   internal                  = "${var.load_balancer_internal}"
   subnets                   = ["${var.subnets_ids}"]

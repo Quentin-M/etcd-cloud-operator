@@ -75,7 +75,10 @@ module "eco" {
   source = "github.com/Quentin-M/etcd-cloud-operator//terraform/platforms/aws"
 
   name = "eco-example"
-  size = "3"
+  max_size = "7"
+  min_size = "3"
+  desired_capacity = "3"
+  min_elb_capacity = "3"
 
   instance_type         = "t2.small"
   instance_disk_size    = "30"

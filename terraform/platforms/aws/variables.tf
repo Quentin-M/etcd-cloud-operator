@@ -16,8 +16,20 @@ variable "name" {
   description = "Name of the deployment"
 }
 
-variable "size" {
-  description = "Number of etcd members (must be odd)"
+variable "max_size" {
+  description = "Number of max etcd members in ASG (must be odd)"
+}
+
+variable "min_size" {
+  description = "Number of min etcd members in ASG (must be odd)"
+}
+
+variable "desired_capacity" {
+  description = "Number of desired etcd members in ASG (must be odd)"
+}
+
+variable "min_elb_capacity" {
+  description = "Number of minimum elb capacity for ASG (must be same as min_size)"
 }
 
 variable "instance_type" {

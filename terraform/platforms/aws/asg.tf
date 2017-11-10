@@ -37,11 +37,12 @@ data "aws_ami" "coreos" {
 }
 
 resource "aws_autoscaling_group" "main" {
-  name               = "${var.name}"
+  name               = "${var.name}-${aws_launch_configuration.main.name}"
 
-  max_size         = "${var.size}"
-  min_size         = "${var.size}"
-  desired_capacity = "${var.size}"
+  max_size         = "${var.max_size}"
+  min_size         = "${var.min_size}"
+  desired_capacity = "${var.desired_capacity}"
+  min_elb_capacity = "${var.min_elb_capacity}"
 
   load_balancers            = ["${aws_elb.clients.name}"]
   health_check_grace_period = 120
@@ -49,6 +50,10 @@ resource "aws_autoscaling_group" "main" {
 
   vpc_zone_identifier  = ["${var.subnets_ids}"]
   launch_configuration = "${aws_launch_configuration.main.name}"
+
+  lifecycle {
+    create_before_destroy = true
+  }
 
   tags = [
     {
@@ -60,7 +65,6 @@ resource "aws_autoscaling_group" "main" {
 }
 
 resource "aws_launch_configuration" "main" {
-  name_prefix = "${var.name}"
 
   image_id      = "${data.aws_ami.coreos.image_id}"
   instance_type = "${var.instance_type}"

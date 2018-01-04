@@ -30,7 +30,7 @@ import (
 )
 
 const (
-	defaultStartTimeout = 120 * time.Second
+	defaultStartTimeout          = 120 * time.Second
 	defaultStartHealthyThreshold = 10 * time.Second
 )
 
@@ -107,7 +107,9 @@ func startServer(state, name, dataDir, publicAddress, privateAddress string, cli
 	cfg.APUrls, _ = types.NewURLs([]string{peerURL(privateAddress, peerSC.TLSEnabled())})
 	cfg.LCUrls, _ = types.NewURLs([]string{clientURL(privateAddress, clientSC.TLSEnabled())})
 	cfg.ACUrls, _ = types.NewURLs([]string{clientURL(publicAddress, clientSC.TLSEnabled())})
-	
+	cfg.ListenMetricsUrls = metricsURLs(privateAddress)
+	cfg.Metrics = "extensive"
+
 	tTimeOut := time.Now().Add(defaultStartTimeout)
 	server, err := embed.StartEtcd(cfg)
 	if err != nil {
@@ -126,7 +128,7 @@ func startServer(state, name, dataDir, publicAddress, privateAddress string, cli
 		server.Close()
 		running = false
 	}
-	
+
 	// Wait until the server announces its ready, or until timeout is exceeded.
 	select {
 	case <-server.Server.ReadyNotify():
@@ -135,16 +137,16 @@ func startServer(state, name, dataDir, publicAddress, privateAddress string, cli
 		stopServer()
 		return nil, notRunning, fmt.Errorf("server took too long to start")
 	}
-	
+
 	// Wait until the member is healthy, or until timeout is exceeded.
 	healthyNotify := make(chan struct{})
 	defer close(healthyNotify)
-	
+
 	clientTC, err := clientSC.ClientConfig()
 	if err != nil {
 		return nil, notRunning, fmt.Errorf("failed to read client transport security: %s", err)
 	}
-	
+
 	go func() {
 		healthySince := time.Time{}
 		for {
@@ -162,18 +164,18 @@ func startServer(state, name, dataDir, publicAddress, privateAddress string, cli
 				healthyNotify <- struct{}{}
 				break
 			}
-			time.Sleep(1*time.Second)
+			time.Sleep(1 * time.Second)
 		}
 	}()
-	
+
 	select {
-		case <-healthyNotify:
-			break
-		case <-time.After(time.Until(tTimeOut)):
-			stopServer()
-			return nil, notRunning, fmt.Errorf("member never became healthy")
+	case <-healthyNotify:
+		break
+	case <-time.After(time.Until(tTimeOut)):
+		stopServer()
+		return nil, notRunning, fmt.Errorf("member never became healthy")
 	}
-	
+
 	// Start go-routine to re-start the etcd server immediately if it crashed.
 	go func() {
 		for {
@@ -186,7 +188,7 @@ func startServer(state, name, dataDir, publicAddress, privateAddress string, cli
 			}
 		}
 	}()
-		
+
 	return stopServer, isRunning, nil
 }
 
@@ -234,7 +236,7 @@ func RemoveMember(clientsAddresses []string, sc SecurityConfig, memberID uint64)
 		return err
 	}
 	defer c.Close()
-	
+
 	ctx, cancel := context.WithTimeout(context.Background(), defaultRequestTimeout)
 	defer cancel()
 

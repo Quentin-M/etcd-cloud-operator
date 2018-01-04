@@ -24,6 +24,7 @@ data "ignition_config" "main" {
     "${data.ignition_systemd_unit.docker.id}",
     "${data.ignition_systemd_unit.locksmithd.id}",
     "${data.ignition_systemd_unit.eco.id}",
+    "${data.ignition_systemd_unit.node-exporter.id}",
   ]
 }
 
@@ -54,6 +55,11 @@ data "template_file" "eco-service" {
 data "ignition_systemd_unit" "eco" {
   name    = "eco.service"
   content = "${data.template_file.eco-service.rendered}"
+}
+
+data "ignition_systemd_unit" "node-exporter" {
+  name    = "node-exporter.service"
+  content = "${file("${path.module}/node-exporter.service")}"
 }
 
 data "ignition_file" "eco-config" {

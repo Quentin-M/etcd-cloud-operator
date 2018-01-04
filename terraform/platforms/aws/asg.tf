@@ -101,6 +101,14 @@ resource "aws_security_group" "instances" {
     self      = true
   }
 
+  ingress {
+    from_port       = 9100
+    to_port         = 9100
+    protocol        = "tcp"
+    security_groups = ["${var.metrics_security_group_ids}"]
+    self            = true
+  }
+
   egress {
     from_port   = 0
     to_port     = 0

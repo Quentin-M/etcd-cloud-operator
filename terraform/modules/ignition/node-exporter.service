@@ -1,0 +1,14 @@
+[Unit]
+Description=Node Exporter Container
+After=docker.service
+Requires=docker.service
+
+[Service]
+TimeoutStartSec=0
+Restart=always
+ExecStartPre=-/usr/bin/docker stop eco
+ExecStartPre=-/usr/bin/docker rm eco
+ExecStart=/usr/bin/docker run --rm --name node-exporter --net=host --pid=host quay.io/prometheus/node-exporter
+
+[Install]
+WantedBy=multi-user.target

@@ -54,3 +54,9 @@ variable "load_balancer_security_group_ids" {
   type        = "list"
   default     = []
 }
+
+variable "metrics_security_group_ids" {
+  description = "List of the security group IDs authorized to reach etcd/node-exporter metrics using the internal instances' IPs (if empty, metrics are not exposed)"
+  type        = "list"
+  default     = []
+}

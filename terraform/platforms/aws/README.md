@@ -39,6 +39,8 @@ vpc_id = "vpc-19f019"
 load_balancer_internal = "false"
 # List of the security group IDs to apply to the load balancer (ingress TCP 2379) (if empty, defaults to open to all).
 load_balancer_security_group_ids = []
+# List of the security group IDs authorized to reach etcd/node-exporter metrics using the internal instances' IPs (if empty, metrics are not exposed)
+metrics_security_group_ids = []
 
 # Container image of ECO to use.
 eco_image = "qmachu/etcd-cloud-operator:latest"
@@ -86,7 +88,8 @@ module "eco" {
   vpc_id                           = "vpc-19f019"
   load_balancer_internal           = "false"
   load_balancer_security_group_ids = []
-
+  metrics_security_group_ids       = []
+  
   eco_image                  = "qmachu/etcd-cloud-operator:latest"
   eco_enable_tls             = "true"
   eco_require_client_certs   = "false"

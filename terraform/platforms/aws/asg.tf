@@ -37,7 +37,7 @@ data "aws_ami" "coreos" {
 }
 
 resource "aws_autoscaling_group" "main" {
-  name               = "${var.name}"
+  name = "${var.name}"
 
   max_size         = "${var.size}"
   min_size         = "${var.size}"

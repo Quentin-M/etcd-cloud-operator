@@ -86,8 +86,8 @@ func restore(name, dataDir, privateAddress string, peerSC SecurityConfig, rc io.
 		),
 	)
 
-	if _, err := cmd.CombinedOutput(); err != nil {
-		return errors.New("etcdctl failed to restore")
+	if out, err := cmd.CombinedOutput(); err != nil {
+		return fmt.Errorf("etcdctl failed to restore:\n %s", out)
 	}
 	return nil
 }

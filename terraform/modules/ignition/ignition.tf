@@ -23,6 +23,7 @@ data "ignition_config" "main" {
   systemd = [
     "${data.ignition_systemd_unit.docker.id}",
     "${data.ignition_systemd_unit.locksmithd.id}",
+    "${data.ignition_systemd_unit.update-engine.id}",
     "${data.ignition_systemd_unit.eco.id}",
     "${data.ignition_systemd_unit.node-exporter.id}",
   ]
@@ -41,6 +42,11 @@ data "ignition_systemd_unit" "docker" {
 
 data "ignition_systemd_unit" "locksmithd" {
   name = "locksmithd.service"
+  mask = true
+}
+
+data "ignition_systemd_unit" "update-engine" {
+  name = "update-engine.service"
   mask = true
 }
 

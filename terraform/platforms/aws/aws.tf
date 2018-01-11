@@ -72,40 +72,6 @@ resource "aws_security_group" "elb" {
   }
 }
 
-resource "aws_cloudwatch_metric_alarm" "elb" {
-  alarm_name = "elb.${var.name}"
-
-  metric_name = "UnHealthyHostCount"
-  namespace   = "AWS/ELB"
-
-  comparison_operator = "GreaterThanOrEqualToThreshold"
-  threshold           = 1
-  statistic           = "Maximum"
-  period              = 60
-  evaluation_periods  = 5
-
-  dimensions {
-    LoadBalancerName = "${aws_elb.clients.name}"
-  }
-}
-
-resource "aws_cloudwatch_metric_alarm" "cpu" {
-  alarm_name = "cpu.${var.name}"
-
-  metric_name = "CPUUtilization"
-  namespace   = "AWS/EC2"
-
-  comparison_operator = "GreaterThanOrEqualToThreshold"
-  threshold           = 80
-  statistic           = "Average"
-  period              = 60
-  evaluation_periods  = 5
-
-  dimensions {
-    AutoScalingGroupName = "${aws_autoscaling_group.main.name}"
-  }
-}
-
 locals {
   asg_provider        = "aws"
   snapshot_provider   = "s3"

@@ -27,6 +27,13 @@ data "ignition_config" "main" {
     "${data.ignition_systemd_unit.eco.id}",
     "${data.ignition_systemd_unit.node-exporter.id}",
   ]
+
+  users = ["${data.ignition_user.core.id}"]
+}
+
+data "ignition_user" "core" {
+  name = "core"
+  ssh_authorized_keys = "${var.instance_ssh_keys}"
 }
 
 data "ignition_systemd_unit" "docker" {

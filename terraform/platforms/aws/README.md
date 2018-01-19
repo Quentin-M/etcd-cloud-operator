@@ -26,8 +26,8 @@ size = "3"
 instance_type = "t2.small"
 # Size of the disk associated to the EC2 instances (in GB).
 instance_disk_size = "30"
-# Name of the SSH key to use (must be present on EC2).
-instance_ssh_key_name = "qmachu-local"
+# List of SSH public keys that are allowed to login into nodes
+instance_ssh_keys = ["ssh-rsa ..."]
 
 # Defines whether public IPs should be assigned to the EC2 instances (mainly depends if public or private subnets are used).
 associate_public_ips = "true"
@@ -81,7 +81,7 @@ module "eco" {
 
   instance_type         = "t2.small"
   instance_disk_size    = "30"
-  instance_ssh_key_name = "qmachu-local"
+  instance_ssh_keys = ["ssh-rsa ..."]
 
   associate_public_ip_address      = "true"
   subnets_ids                      = ["subnet-f438f793", "subnet-d4bea38c"]

@@ -28,6 +28,11 @@
 
 // Variables.
 
+variable "instance_ssh_keys" {
+  description = "List of SSH public keys that are allowed to login into nodes"
+  type = "list"
+}
+
 variable "eco_image" {
   description = "Container image of ECO to use"
   default     = "qmachu/etcd-cloud-operator-dev:latest"
@@ -86,6 +91,8 @@ module "configuration" {
 
 module "ignition" {
   source = "../../modules/ignition"
+
+  instance_ssh_keys = "${var.instance_ssh_keys}"
 
   eco_image         = "${var.eco_image}"
   eco_configuration = "${module.configuration.configuration}"

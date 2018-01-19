@@ -64,7 +64,6 @@ resource "aws_launch_configuration" "main" {
 
   image_id      = "${data.aws_ami.coreos.image_id}"
   instance_type = "${var.instance_type}"
-  key_name      = "${var.instance_ssh_key_name}"
 
   security_groups      = ["${aws_security_group.instances.id}"]
   iam_instance_profile = "${aws_iam_instance_profile.instances.arn}"

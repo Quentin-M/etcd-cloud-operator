@@ -28,10 +28,6 @@ variable "instance_disk_size" {
   description = "Size of the disk associated to the EC2 instances (in GB)"
 }
 
-variable "instance_ssh_key_name" {
-  description = "Name of the SSH key to use (must be present on EC2)"
-}
-
 variable "associate_public_ips" {
   description = "Defines whether public IPs should be assigned to the EC2 instances (mainly depends if public or private subnets are used)"
 }

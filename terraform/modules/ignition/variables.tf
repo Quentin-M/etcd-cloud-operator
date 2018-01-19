@@ -12,6 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+variable "instance_ssh_keys" {
+  description = "List of SSH public keys that are allowed to login into nodes"
+  type = "list"
+}
+
 variable "eco_image" {
   description = "Defines the container image to run for ECO"
 }

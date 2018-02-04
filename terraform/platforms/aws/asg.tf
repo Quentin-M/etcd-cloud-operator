@@ -73,6 +73,7 @@ resource "aws_launch_configuration" "main" {
   associate_public_ip_address = "${var.associate_public_ips}"
 
   root_block_device {
+    volume_type   = "gp2"
     volume_size = "${var.instance_disk_size}"
   }
 

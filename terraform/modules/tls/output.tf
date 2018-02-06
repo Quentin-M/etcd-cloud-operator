@@ -13,21 +13,21 @@
 // limitations under the License.
 
 output "ca" {
-  value = "${var.enabled == true ? tls_self_signed_cert.ca.cert_pem : ""}"
+  value = "${var.enabled == true ? local.ca["cert"]: ""}"
 }
 
 output "clients_server_cert" {
-  value = "${var.enabled == true ? tls_locally_signed_cert.clients-server.cert_pem : ""}"
+  value = "${var.enabled == true ? tls_locally_signed_cert.clients-server.*.cert_pem[0] : ""}"
 }
 
 output "clients_server_key" {
-  value = "${var.enabled == true ? tls_private_key.clients-server.private_key_pem : ""}"
+  value = "${var.enabled == true ? tls_private_key.clients-server.*.private_key_pem[0] : ""}"
 }
 
 output "clients_cert" {
-  value = "${var.enabled == true && var.generate_clients_cert == true ? tls_locally_signed_cert.clients.cert_pem : ""}"
+  value = "${var.enabled == true && var.generate_clients_cert == true ? tls_locally_signed_cert.clients.*.cert_pem[0] : ""}"
 }
 
 output "clients_key" {
-  value = "${var.enabled == true && var.generate_clients_cert == true ? tls_private_key.clients.private_key_pem : ""}"
+  value = "${var.enabled == true && var.generate_clients_cert == true ? tls_private_key.clients.*.private_key_pem[0] : ""}"
 }

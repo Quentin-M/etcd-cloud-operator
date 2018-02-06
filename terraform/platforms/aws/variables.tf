@@ -28,10 +28,6 @@ variable "instance_disk_size" {
   description = "Size of the disk associated to the EC2 instances (in GB)"
 }
 
-variable "instance_ssh_key_name" {
-  description = "Name of the SSH key to use (must be present on EC2)"
-}
-
 variable "associate_public_ips" {
   description = "Defines whether public IPs should be assigned to the EC2 instances (mainly depends if public or private subnets are used)"
 }
@@ -51,6 +47,12 @@ variable "load_balancer_internal" {
 
 variable "load_balancer_security_group_ids" {
   description = "List of the security group IDs to apply to the load balancer (ingress TCP 2379) (if empty, defaults to open to all)"
+  type        = "list"
+  default     = []
+}
+
+variable "metrics_security_group_ids" {
+  description = "List of the security group IDs authorized to reach etcd/node-exporter metrics using the internal instances' IPs (if empty, metrics are not exposed)"
   type        = "list"
   default     = []
 }

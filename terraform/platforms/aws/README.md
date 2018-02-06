@@ -26,8 +26,8 @@ size = "3"
 instance_type = "t2.small"
 # Size of the disk associated to the EC2 instances (in GB).
 instance_disk_size = "30"
-# Name of the SSH key to use (must be present on EC2).
-instance_ssh_key_name = "qmachu-local"
+# List of SSH public keys that are allowed to login into nodes
+instance_ssh_keys = ["ssh-rsa ..."]
 
 # Defines whether public IPs should be assigned to the EC2 instances (mainly depends if public or private subnets are used).
 associate_public_ips = "true"
@@ -39,6 +39,8 @@ vpc_id = "vpc-19f019"
 load_balancer_internal = "false"
 # List of the security group IDs to apply to the load balancer (ingress TCP 2379) (if empty, defaults to open to all).
 load_balancer_security_group_ids = []
+# List of the security group IDs authorized to reach etcd/node-exporter metrics using the internal instances' IPs (if empty, metrics are not exposed)
+metrics_security_group_ids = []
 
 # Container image of ECO to use.
 eco_image = "qmachu/etcd-cloud-operator:latest"
@@ -79,14 +81,15 @@ module "eco" {
 
   instance_type         = "t2.small"
   instance_disk_size    = "30"
-  instance_ssh_key_name = "qmachu-local"
+  instance_ssh_keys = ["ssh-rsa ..."]
 
   associate_public_ip_address      = "true"
   subnets_ids                      = ["subnet-f438f793", "subnet-d4bea38c"]
   vpc_id                           = "vpc-19f019"
   load_balancer_internal           = "false"
   load_balancer_security_group_ids = []
-
+  metrics_security_group_ids       = []
+  
   eco_image                  = "qmachu/etcd-cloud-operator:latest"
   eco_enable_tls             = "true"
   eco_require_client_certs   = "false"

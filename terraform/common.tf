@@ -28,6 +28,11 @@
 
 // Variables.
 
+variable "instance_ssh_keys" {
+  description = "List of SSH public keys that are allowed to login into nodes"
+  type = "list"
+}
+
 variable "eco_image" {
   description = "Container image of ECO to use"
   default     = "qmachu/etcd-cloud-operator-dev:latest"
@@ -54,12 +59,19 @@ variable "eco_snapshot_ttl" {
   description = "Defines the lifespan of each etcd snapshot (e.g. 24h)"
 }
 
+variable "ca" {
+  description = "Optional CA keypair from which all certificates should be generated ('cert', 'key', 'alg')"
+  type        = "map"
+  default     = {}
+}
+
 // Modules.
 
 module "tls" {
   source = "../../modules/tls"
 
   enabled               = "${var.eco_enable_tls}"
+  ca                    = "${var.ca}"
   common_name           = "${local.advertise_address}"
   generate_clients_cert = "${var.eco_require_client_certs}"
 }
@@ -86,6 +98,8 @@ module "configuration" {
 
 module "ignition" {
   source = "../../modules/ignition"
+
+  instance_ssh_keys = "${var.instance_ssh_keys}"
 
   eco_image         = "${var.eco_image}"
   eco_configuration = "${module.configuration.configuration}"

@@ -37,7 +37,7 @@ data "aws_ami" "coreos" {
 }
 
 resource "aws_autoscaling_group" "main" {
-  name               = "${var.name}"
+  name = "${var.name}"
 
   max_size         = "${var.size}"
   min_size         = "${var.size}"
@@ -64,15 +64,16 @@ resource "aws_launch_configuration" "main" {
 
   image_id      = "${data.aws_ami.coreos.image_id}"
   instance_type = "${var.instance_type}"
-  key_name      = "${var.instance_ssh_key_name}"
 
   security_groups      = ["${aws_security_group.instances.id}"]
   iam_instance_profile = "${aws_iam_instance_profile.instances.arn}"
   user_data            = "${module.ignition.ignition}"
+  ebs_optimized        = "true"
 
   associate_public_ip_address = "${var.associate_public_ips}"
 
   root_block_device {
+    volume_type   = "gp2"
     volume_size = "${var.instance_disk_size}"
   }
 
@@ -99,6 +100,22 @@ resource "aws_security_group" "instances" {
     to_port   = 2380
     protocol  = "tcp"
     self      = true
+  }
+
+  ingress {
+    from_port       = 2381
+    to_port         = 2381
+    protocol        = "tcp"
+    security_groups = ["${var.metrics_security_group_ids}"]
+    self            = true
+  }
+
+  ingress {
+    from_port       = 9100
+    to_port         = 9100
+    protocol        = "tcp"
+    security_groups = ["${var.metrics_security_group_ids}"]
+    self            = true
   }
 
   egress {

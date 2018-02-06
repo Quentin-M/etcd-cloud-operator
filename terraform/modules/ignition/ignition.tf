@@ -23,8 +23,17 @@ data "ignition_config" "main" {
   systemd = [
     "${data.ignition_systemd_unit.docker.id}",
     "${data.ignition_systemd_unit.locksmithd.id}",
+    "${data.ignition_systemd_unit.update-engine.id}",
     "${data.ignition_systemd_unit.eco.id}",
+    "${data.ignition_systemd_unit.node-exporter.id}",
   ]
+
+  users = ["${data.ignition_user.core.id}"]
+}
+
+data "ignition_user" "core" {
+  name = "core"
+  ssh_authorized_keys = "${var.instance_ssh_keys}"
 }
 
 data "ignition_systemd_unit" "docker" {
@@ -43,6 +52,11 @@ data "ignition_systemd_unit" "locksmithd" {
   mask = true
 }
 
+data "ignition_systemd_unit" "update-engine" {
+  name = "update-engine.service"
+  mask = true
+}
+
 data "template_file" "eco-service" {
   template = "${file("${path.module}/eco.service")}"
 
@@ -54,6 +68,11 @@ data "template_file" "eco-service" {
 data "ignition_systemd_unit" "eco" {
   name    = "eco.service"
   content = "${data.template_file.eco-service.rendered}"
+}
+
+data "ignition_systemd_unit" "node-exporter" {
+  name    = "node-exporter.service"
+  content = "${file("${path.module}/node-exporter.service")}"
 }
 
 data "ignition_file" "eco-config" {

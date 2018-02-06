@@ -17,6 +17,7 @@ package etcd
 import (
 	"crypto/tls"
 	"fmt"
+	"net/url"
 	"strings"
 	"time"
 
@@ -25,8 +26,9 @@ import (
 )
 
 const (
-	defaultClientPort = 2379
-	defaultPeerPort   = 2380
+	defaultClientPort  = 2379
+	defaultPeerPort    = 2380
+	defaultMetricsPort = 2381
 
 	defaultDialTimeout    = 5 * time.Second
 	defaultRequestTimeout = 5 * time.Second
@@ -104,6 +106,11 @@ func clientURL(address string, tlsEnabled bool) string {
 
 func peerURL(address string, tlsEnabled bool) string {
 	return fmt.Sprintf("%s://%s:%d", scheme(tlsEnabled), address, defaultPeerPort)
+}
+
+func metricsURLs(address string) []url.URL {
+	u, _ := url.Parse(fmt.Sprintf("http://%s:%d", address, defaultMetricsPort))
+	return []url.URL{*u}
 }
 
 func initialCluster(addresses map[string]string, tlsEnabled bool) string {

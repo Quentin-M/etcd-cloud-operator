@@ -16,6 +16,11 @@ variable "enabled" {
   description = "Defines whether the module is enabled or not"
 }
 
+variable "ca" {
+  description = "Optional CA keypair from which all certificates should be generated ('cert', 'key', 'alg')"
+  type        = "map"
+}
+
 variable "common_name" {
   description = "Defines the common name for the clients_server certificate."
 }

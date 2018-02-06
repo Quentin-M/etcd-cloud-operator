@@ -15,14 +15,14 @@
 # CA.
 
 resource "tls_private_key" "ca" {
-  count = "${var.enabled == true ? 1 : 0}"
+  count = "${var.enabled == true && length(var.ca["key"]) == 0 ? 1 : 0}"
 
   algorithm = "RSA"
   rsa_bits  = "2048"
 }
 
 resource "tls_self_signed_cert" "ca" {
-  count = "${var.enabled == true ? 1 : 0}"
+  count = "${var.enabled == true && length(var.ca["key"]) == 0 ? 1 : 0}"
 
   key_algorithm         = "${tls_private_key.ca.algorithm}"
   private_key_pem       = "${tls_private_key.ca.private_key_pem}"
@@ -39,6 +39,14 @@ resource "tls_self_signed_cert" "ca" {
     "digital_signature",
     "cert_signing",
   ]
+}
+
+locals {
+  ca = {
+    "cert" = "${length(var.ca["key"]) == 0 ? join("", tls_self_signed_cert.ca.*.cert_pem) : var.ca["cert"]}"
+    "key" = "${length(var.ca["key"]) == 0 ? join("", tls_private_key.ca.*.private_key_pem) : var.ca["key"]}"
+    "alg" = "${length(var.ca["key"]) == 0 ? join("", tls_private_key.ca.*.algorithm) : var.ca["alg"]}"
+  }
 }
 
 # Certificate for the etcd client server.
@@ -66,9 +74,9 @@ resource "tls_locally_signed_cert" "clients-server" {
   count = "${var.enabled == true ? 1 : 0}"
 
   cert_request_pem      = "${tls_cert_request.clients-server.cert_request_pem}"
-  ca_key_algorithm      = "${join(" ", tls_self_signed_cert.ca.*.key_algorithm)}"
-  ca_private_key_pem    = "${join(" ", tls_private_key.ca.*.private_key_pem)}"
-  ca_cert_pem           = "${join(" ", tls_self_signed_cert.ca.*.cert_pem)}"
+  ca_key_algorithm      = "${local.ca["alg"]}"
+  ca_private_key_pem    = "${local.ca["key"]}"
+  ca_cert_pem           = "${local.ca["cert"]}"
   validity_period_hours = 8760
 
   allowed_uses = [
@@ -103,9 +111,9 @@ resource "tls_locally_signed_cert" "clients" {
   count = "${var.enabled == true && var.generate_clients_cert == true ? 1 : 0}"
 
   cert_request_pem      = "${tls_cert_request.clients.cert_request_pem}"
-  ca_key_algorithm      = "${join(" ", tls_self_signed_cert.ca.*.key_algorithm)}"
-  ca_private_key_pem    = "${join(" ", tls_private_key.ca.*.private_key_pem)}"
-  ca_cert_pem           = "${join(" ", tls_self_signed_cert.ca.*.cert_pem)}"
+  ca_key_algorithm      = "${local.ca["alg"]}"
+  ca_private_key_pem    = "${local.ca["key"]}"
+  ca_cert_pem           = "${local.ca["cert"]}"
   validity_period_hours = 8760
 
   allowed_uses = [

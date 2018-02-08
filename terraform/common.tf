@@ -62,7 +62,11 @@ variable "eco_snapshot_ttl" {
 variable "ca" {
   description = "Optional CA keypair from which all certificates should be generated ('cert', 'key', 'alg')"
   type        = "map"
-  default     = {}
+  default     = {
+    "cert" = "",
+    "key"  = "",
+    "alg"  = "",
+  }
 }
 
 // Modules.

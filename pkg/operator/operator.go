@@ -27,7 +27,7 @@ import (
 
 // Config is the global configuration for an instance of ECO.
 type Config struct {
-	CheckInterval time.Duration `yaml:"check-interval"`
+	CheckInterval        time.Duration `yaml:"check-interval"`
 	UnseenInstanceTTL    time.Duration `yaml:"unseen-instance-ttl"`
 	AutoDisasterRecovery bool          `yaml:"auto-disaster-recovery"`
 
@@ -94,6 +94,7 @@ func join(asgSelf asg.Instance, asgInstances []asg.Instance, etcdMembers map[str
 	return etcd.JoinCluster(
 		asgSelf.Name(),
 		cfg.Etcd.DataDir,
+		cfg.Etcd.BackendQuota,
 		stringOverride(asgSelf.Address(), cfg.Etcd.AdvertiseAddress),
 		asgSelf.Address(),
 		cfg.Etcd.ClientTransportSecurity,
@@ -121,6 +122,7 @@ func seedOrRestore(asgSelf asg.Instance, snapshotProvider snapshot.Provider, cfg
 	return etcd.SeedCluster(
 		asgSelf.Name(),
 		cfg.Etcd.DataDir,
+		cfg.Etcd.BackendQuota,
 		stringOverride(asgSelf.Address(), cfg.Etcd.AdvertiseAddress),
 		asgSelf.Address(),
 		cfg.Etcd.ClientTransportSecurity,

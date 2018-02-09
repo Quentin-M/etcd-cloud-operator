@@ -36,7 +36,7 @@ type config struct {
 func defaultConfig() config {
 	return config{
 		ECO: operator.Config{
-			CheckInterval: 30 * time.Second,
+			CheckInterval:        30 * time.Second,
 			AutoDisasterRecovery: false,
 			UnseenInstanceTTL:    60 * time.Second,
 			Etcd: etcd.EtcdConfiguration{
@@ -44,6 +44,7 @@ func defaultConfig() config {
 				PeerTransportSecurity: etcd.SecurityConfig{
 					AutoTLS: true,
 				},
+				BackendQuota: 2 * 1024 * 1024 * 1024,
 			},
 			Snapshot: snapshot.Config{
 				Interval: 30 * time.Minute,

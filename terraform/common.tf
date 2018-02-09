@@ -59,6 +59,11 @@ variable "eco_snapshot_ttl" {
   description = "Defines the lifespan of each etcd snapshot (e.g. 24h)"
 }
 
+variable "eco_backend_quota" {
+  description = "Defines the maximum amount of data that etcd can store, in bytes, before going into maintenance mode"
+  default = "2147483648"
+}
+
 variable "ca" {
   description = "Optional CA keypair from which all certificates should be generated ('cert', 'key', 'alg')"
   type        = "map"
@@ -98,6 +103,8 @@ module "configuration" {
   eco_enable_auto_disaster_recovery = "${var.eco_auto_disaster_recovery}"
   eco_snapshot_interval             = "${var.eco_snapshot_interval}"
   eco_snapshot_ttl                  = "${var.eco_snapshot_ttl}"
+
+  eco_backend_quota = "${var.eco_backend_quota}"
 }
 
 module "ignition" {

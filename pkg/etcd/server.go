@@ -34,7 +34,7 @@ const (
 	defaultStartHealthyThreshold = 10 * time.Second
 )
 
-func SeedCluster(name, dataDir, publicAddress, privateAddress string, clientSC, peerSC SecurityConfig, snapshotRC io.ReadCloser) (func(), func() bool, error) {
+func SeedCluster(name, dataDir string, dataQuota int64, publicAddress, privateAddress string, clientSC, peerSC SecurityConfig, snapshotRC io.ReadCloser) (func(), func() bool, error) {
 	os.RemoveAll(dataDir)
 	if snapshotRC != nil {
 		err := restore(name, dataDir, privateAddress, peerSC, snapshotRC)
@@ -47,6 +47,7 @@ func SeedCluster(name, dataDir, publicAddress, privateAddress string, clientSC, 
 		"new",
 		name,
 		dataDir,
+		dataQuota,
 		publicAddress,
 		privateAddress,
 		clientSC,
@@ -55,12 +56,13 @@ func SeedCluster(name, dataDir, publicAddress, privateAddress string, clientSC, 
 	)
 }
 
-func JoinCluster(name, dataDir, publicAddress, privateAddress string, clientSC, peerSC SecurityConfig, memberID uint64, clientsAddresses []string, peersAddresses map[string]string) (func(), func() bool, error) {
+func JoinCluster(name, dataDir string, dataQuota int64, publicAddress, privateAddress string, clientSC, peerSC SecurityConfig, memberID uint64, clientsAddresses []string, peersAddresses map[string]string) (func(), func() bool, error) {
 	ss := func() (func(), func() bool, error) {
 		return startServer(
 			"existing",
 			name,
 			dataDir,
+			dataQuota,
 			publicAddress,
 			privateAddress,
 			clientSC,
@@ -93,7 +95,7 @@ func JoinCluster(name, dataDir, publicAddress, privateAddress string, clientSC, 
 	return stop, isRunning, err
 }
 
-func startServer(state, name, dataDir, publicAddress, privateAddress string, clientSC, peerSC SecurityConfig, peersAddresses map[string]string) (func(), func() bool, error) {
+func startServer(state, name, dataDir string, dataQuota int64, publicAddress, privateAddress string, clientSC, peerSC SecurityConfig, peersAddresses map[string]string) (func(), func() bool, error) {
 	cfg := embed.NewConfig()
 	cfg.ClusterState = state
 	cfg.Name = name
@@ -109,6 +111,7 @@ func startServer(state, name, dataDir, publicAddress, privateAddress string, cli
 	cfg.ACUrls, _ = types.NewURLs([]string{clientURL(publicAddress, clientSC.TLSEnabled())})
 	cfg.ListenMetricsUrls = metricsURLs(privateAddress)
 	cfg.Metrics = "extensive"
+	cfg.QuotaBackendBytes = dataQuota
 
 	tTimeOut := time.Now().Add(defaultStartTimeout)
 	server, err := embed.StartEtcd(cfg)

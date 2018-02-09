@@ -59,3 +59,7 @@ variable "eco_snapshot_ttl" {
 variable "eco_snapshot_bucket" {
   description = "Defines the S3 Bucket location for etcd snapshot when the AWS provider is used on ECO"
 }
+
+variable "eco_backend_quota" {
+  description = "Defines the maximum amount of data that etcd can store, in bytes, before going into maintenance mode"
+}

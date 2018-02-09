@@ -28,6 +28,8 @@ eco:
       key-file:
       trusted-ca-file:
       peer-client-cert-auth: false
+    # Defines the maximum amount of data that etcd can store, in bytes, before going into maintenance mode
+    backend-quota: 2147483648
   # Configuration of the auto-scaling group provider.
   asg:
     provider: aws

@@ -31,5 +31,7 @@ data "template_file" "configuration" {
     snapshot_interval = "${var.eco_snapshot_interval}"
     snapshot_ttl      = "${var.eco_snapshot_ttl}"
     snapshot_bucket   = "${var.eco_snapshot_bucket}"
+
+    backend_quota = "${var.eco_backend_quota}"
   }
 }

@@ -54,6 +54,8 @@ eco_auto_disaster_recovery = "true"
 eco_snapshot_interval = "30m"
 # Defines the lifespan of each etcd snapshot (e.g. 24h).
 eco_snapshot_ttl = "24h"
+# Defines the maximum amount of data that etcd can store, in bytes, before going into maintenance mode
+eco_backend_quota = "2147483648"
 ```
 
 Finally, let Terraform configure and create the infrastructure:
@@ -96,6 +98,8 @@ module "eco" {
   eco_auto_disaster_recovery = "true"
   eco_snapshot_interval      = "30m"
   eco_snapshot_ttl           = "24h"
+  
+  eco_backend_quota = "${2 * 1024 * 1024 * 1024}"
 }
 ```
 

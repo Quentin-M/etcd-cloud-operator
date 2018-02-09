@@ -42,6 +42,7 @@ type EtcdConfiguration struct {
 	DataDir                 string         `yaml:"data-dir"`
 	ClientTransportSecurity SecurityConfig `yaml:"client-transport-security"`
 	PeerTransportSecurity   SecurityConfig `yaml:"peer-transport-security"`
+	BackendQuota            int64          `yaml:"backend-quota"`
 }
 
 type SecurityConfig struct {

@@ -1,0 +1,15 @@
+#!/bin/bash
+set -a
+
+ETCDCTL_API=3
+ETCDCTL_CACERT=/etc/eco/ca.crt
+ETCDCTL_CERT=/etc/eco/eco.crt
+ETCDCTL_KEY=/etc/eco/eco.key
+ETCDCTL_INSECURE_SKIP_TLS_VERIFY=true
+
+if [[ ! $@ = *"--endpoints="* ]]; then
+    echo "Example: $0 --endpoints=172.16.4.236:2379,172.16.5.20:2379,172.16.3.79:2379 endpoint status -w table"
+    exit 1
+fi
+
+etcdctl $@

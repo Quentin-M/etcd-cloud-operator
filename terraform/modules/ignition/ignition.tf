@@ -18,6 +18,7 @@ data "ignition_config" "main" {
     "${data.ignition_file.eco-ca.id}",
     "${data.ignition_file.eco-crt.id}",
     "${data.ignition_file.eco-key.id}",
+    "${data.ignition_file.e.id}"
   ]
 
   systemd = [
@@ -112,5 +113,15 @@ data "ignition_file" "eco-key" {
 
   content {
     content = "${var.eco_key}"
+  }
+}
+
+data "ignition_file" "e" {
+  filesystem = "root"
+  path       = "/opt/bin/e"
+  mode       = 0755
+
+  content {
+    content = "${file("${path.module}/e")}"
   }
 }

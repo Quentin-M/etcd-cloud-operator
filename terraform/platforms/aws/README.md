@@ -35,6 +35,8 @@ associate_public_ips = "true"
 subnets_ids = ["subnet-f438f793", "subnet-d4bea38c"]
 # ID of the VPC where the subnets are defined.
 vpc_id = "vpc-19f019"
+# Optional Route53 Zone ID under which an 'etcd' record should be created for client connections.
+route53_zone_id = ""
 # Defines whether the load balancer for etcd will be internet facing or internal.
 load_balancer_internal = "false"
 # List of the security group IDs to apply to the load balancer (ingress TCP 2379) (if empty, defaults to open to all).
@@ -88,6 +90,7 @@ module "eco" {
   associate_public_ip_address      = "true"
   subnets_ids                      = ["subnet-f438f793", "subnet-d4bea38c"]
   vpc_id                           = "vpc-19f019"
+  route53_zone_id                  = ""
   load_balancer_internal           = "false"
   load_balancer_security_group_ids = []
   metrics_security_group_ids       = []

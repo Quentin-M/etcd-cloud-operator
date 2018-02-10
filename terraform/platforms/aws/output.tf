@@ -13,5 +13,5 @@
 // limitations under the License.
 
 output "etcd_address" {
-  value = "${var.eco_enable_tls == true ? "https" : "http"}://${aws_elb.clients.dns_name}:2379"
+  value = "${var.eco_enable_tls == true ? "https" : "http"}://${var.route53_zone_id != "" ? join("", aws_route53_record.elb.*.name) : aws_elb.clients.dns_name}:2379"
 }

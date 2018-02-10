@@ -41,6 +41,10 @@ variable "vpc_id" {
   description = "ID of the VPC where the subnets are defined."
 }
 
+variable "route53_zone_id" {
+  description = "Optional Route53 Zone ID under which an 'etcd' record should be created for client connections"
+}
+
 variable "load_balancer_internal" {
   description = "Defines whether the load balancer for etcd should be internet facing or internal"
 }

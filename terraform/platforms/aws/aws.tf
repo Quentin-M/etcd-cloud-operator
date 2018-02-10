@@ -77,5 +77,5 @@ locals {
   snapshot_provider   = "s3"
   unseen_instance_ttl = "60s"
   snapshot_bucket     = "${aws_s3_bucket.backups.bucket}"
-  advertise_address   = "${aws_elb.clients.dns_name}"
+  advertise_address   = "${var.route53_zone_id != "" ? aws_route53_record.elb.name : aws_elb.clients.dns_name }"
 }

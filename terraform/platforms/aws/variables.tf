@@ -41,6 +41,11 @@ variable "vpc_id" {
   description = "ID of the VPC where the subnets are defined."
 }
 
+variable "route53_enabled" {
+  description = "Defines whether a Route53 record should be created for client connections"
+  default = "false"
+}
+
 variable "route53_zone_id" {
   description = "Optional Route53 Zone ID under which an 'etcd' record should be created for client connections"
 }

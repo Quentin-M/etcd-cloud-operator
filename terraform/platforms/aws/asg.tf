@@ -45,7 +45,7 @@ resource "aws_autoscaling_group" "main" {
 
   load_balancers            = ["${aws_elb.clients.name}"]
   health_check_grace_period = 120
-  health_check_type         = "ELB"
+  health_check_type         = "EC2"
 
   vpc_zone_identifier  = ["${var.subnets_ids}"]
   launch_configuration = "${aws_launch_configuration.main.name}"
@@ -74,7 +74,7 @@ resource "aws_launch_configuration" "main" {
 
   root_block_device {
     volume_type   = "gp2"
-    volume_size = "${var.instance_disk_size}"
+    volume_size   = "${var.instance_disk_size}"
   }
 
   lifecycle {
@@ -86,6 +86,13 @@ resource "aws_launch_configuration" "main" {
 resource "aws_security_group" "instances" {
   name   = "instances.${var.name}"
   vpc_id = "${var.vpc_id}"
+
+  ingress {
+    from_port       = 2378
+    to_port         = 2378
+    protocol        = "tcp"
+    self            = true
+  }
 
   ingress {
     from_port       = 2379

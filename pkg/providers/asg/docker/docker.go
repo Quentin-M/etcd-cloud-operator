@@ -44,29 +44,26 @@ func (d *docker) Configure(providerConfig asg.Config) error {
 	return nil
 }
 
-func (d *docker) AutoScalingGroupStatus() (instances []asg.Instance, self asg.Instance, asgLeader asg.Instance, asgScaled bool, err error) {
+func (d *docker) AutoScalingGroupStatus() (instances []asg.Instance, self asg.Instance, size int, err error) {
 	hostname, _ := os.Hostname()
 
 	// List all containers names, which match the filter.
 	containerNames, err := containerList(d.config.NameFilter)
 	if err != nil {
-		return nil, nil, nil, false, err
+		return nil, nil, 0, err
 	}
 
 	for _, name := range containerNames {
 		container, err := containerInspect(name)
 		if err != nil {
-			return nil, nil, nil, false, err
+			return nil, nil, 0, err
 		}
 		if strings.Contains(container.id, hostname) {
 			self = container
 		}
-		if asgLeader == nil || strings.Compare(asgLeader.Name(), name) > 0 {
-			asgLeader = container
-		}
 		instances = append(instances, container)
 	}
+	size = d.config.Size
 
-	asgScaled = len(instances) >= d.config.Size
 	return
 }

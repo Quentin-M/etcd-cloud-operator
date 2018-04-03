@@ -52,8 +52,6 @@ eco_image = "qmachu/etcd-cloud-operator:latest"
 eco_enable_tls = "true"
 # Defines whether etcd should expect client certificates for client connections.
 eco_require_client_certs = "false"
-# Defines whether automatic disaster recovery on ECO should be enabled.
-eco_auto_disaster_recovery = "true"
 # Defines the interval between consecutive etcd snapshots (e.g. 30m).
 eco_snapshot_interval = "30m"
 # Defines the lifespan of each etcd snapshot (e.g. 24h).
@@ -101,7 +99,6 @@ module "eco" {
   eco_image                  = "qmachu/etcd-cloud-operator:latest"
   eco_enable_tls             = "true"
   eco_require_client_certs   = "false"
-  eco_auto_disaster_recovery = "true"
   eco_snapshot_interval      = "30m"
   eco_snapshot_ttl           = "24h"
   

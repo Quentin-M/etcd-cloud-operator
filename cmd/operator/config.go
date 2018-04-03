@@ -36,9 +36,7 @@ type config struct {
 func defaultConfig() config {
 	return config{
 		ECO: operator.Config{
-			CheckInterval:        30 * time.Second,
-			AutoDisasterRecovery: false,
-			UnseenInstanceTTL:    60 * time.Second,
+			UnhealthyMemberTTL: 2 * time.Minute,
 			Etcd: etcd.EtcdConfiguration{
 				DataDir: "/var/lib/etcd",
 				PeerTransportSecurity: etcd.SecurityConfig{

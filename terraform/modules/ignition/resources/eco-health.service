@@ -1,0 +1,11 @@
+[Unit]
+Description=ECO Health checker
+After=eco.service
+
+[Service]
+TimeoutStartSec=0
+Restart=always
+ExecStart=/opt/bin/eco-health.sh
+
+[Install]
+WantedBy=multi-user.target

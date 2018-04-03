@@ -20,12 +20,8 @@ variable "eco_snapshot_provider" {
   description = "Defines the snapshot provider for ECO"
 }
 
-variable "eco_unseen_instance_ttl" {
-  description = "Defines how long a member, which instance has not been seen, is tolerated in the cluster"
-}
-
-variable "eco_enable_auto_disaster_recovery" {
-  description = "Defines whether automatic disaster recovery on ECO should be enabled"
+variable "eco_unhealthy_member_ttl" {
+  description = "Defines how long an unhealthy member will be kept as a member in the cluster"
 }
 
 variable "eco_advertise_address" {

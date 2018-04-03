@@ -16,265 +16,456 @@ package etcd
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
+	"os/exec"
 	"time"
 
 	etcdcl "github.com/coreos/etcd/clientv3"
-	"github.com/coreos/etcd/clientv3/concurrency"
 	"github.com/coreos/etcd/embed"
-	"github.com/coreos/etcd/etcdserver/api/v3rpc/rpctypes"
 	"github.com/coreos/etcd/pkg/types"
 	log "github.com/sirupsen/logrus"
+	"google.golang.org/grpc/grpclog"
+
+	"github.com/quentin-m/etcd-cloud-operator/pkg/providers/snapshot"
+	_ "github.com/quentin-m/etcd-cloud-operator/pkg/providers/snapshot/etcd"
 )
+
+var ErrMemberRevisionTooOld = errors.New("member revision older than the minimum desired revision")
 
 const (
-	defaultStartTimeout          = 120 * time.Second
-	defaultStartHealthyThreshold = 10 * time.Second
+	defaultStartTimeout          = 900 * time.Second
+	defaultStartRejoinTimeout    = 60 * time.Second
+	defaultMemberCleanerInterval = 15 * time.Second
 )
 
-func SeedCluster(name, dataDir string, dataQuota int64, publicAddress, privateAddress string, clientSC, peerSC SecurityConfig, snapshotRC io.ReadCloser) (func(), func() bool, error) {
-	os.RemoveAll(dataDir)
-	if snapshotRC != nil {
-		err := restore(name, dataDir, privateAddress, peerSC, snapshotRC)
-		if err != nil {
-			return nil, notRunning, fmt.Errorf("failed to restore snapshot: %v", err)
-		}
-	}
-
-	return startServer(
-		"new",
-		name,
-		dataDir,
-		dataQuota,
-		publicAddress,
-		privateAddress,
-		clientSC,
-		peerSC,
-		map[string]string{name: privateAddress},
-	)
+type Server struct {
+	server    *embed.Etcd
+	isRunning bool
+	cfg       ServerConfig
 }
 
-func JoinCluster(name, dataDir string, dataQuota int64, publicAddress, privateAddress string, clientSC, peerSC SecurityConfig, memberID uint64, clientsAddresses []string, peersAddresses map[string]string) (func(), func() bool, error) {
-	ss := func() (func(), func() bool, error) {
-		return startServer(
-			"existing",
-			name,
-			dataDir,
-			dataQuota,
-			publicAddress,
-			privateAddress,
-			clientSC,
-			peerSC,
-			peersAddresses,
-		)
+type ServerConfig struct {
+	Name               string
+	DataDir            string
+	DataQuota          int64
+	PublicAddress      string
+	PrivateAddress     string
+	ClientSC           SecurityConfig
+	PeerSC             SecurityConfig
+	UnhealthyMemberTTL time.Duration
+
+	// Optional, used in {Seed, Join} to periodically save snapshots.
+	SnapshotProvider snapshot.Provider
+	SnapshotInterval time.Duration
+	SnapshotTTL      time.Duration
+
+	// Internal, used in startServer.
+	clusterState string
+	initialPURLs map[string]string
+}
+
+func NewServer(cfg ServerConfig) *Server {
+	return &Server{
+		cfg: cfg,
+	}
+}
+
+func (c *Server) Seed(snapshot *snapshot.Metadata) error {
+	// Restore a snapshot if a provider is given.
+	if snapshot != nil {
+		if err := c.Restore(snapshot); err != nil {
+			return fmt.Errorf("failed to restore snapshot: %v", err)
+		}
+	} else {
+		// Remove the existing data directory.
+		//
+		// When there is a snapshot available, we let Restore take care of the data directory entirely.
+		os.RemoveAll(c.cfg.DataDir)
 	}
 
-	if memberID != 0 {
-		if stop, isRunning, err := ss(); err == nil {
-			return stop, isRunning, nil
-		}
-		log.Warn("failed to join as an existing member, resetting")
-		if err := RemoveMember(clientsAddresses, clientSC, memberID); err != nil {
-			return nil, notRunning, fmt.Errorf("failed to join cluster as an existing member, and failed to remove membership")
-		}
-	}
-	os.RemoveAll(dataDir)
+	// Set the internal configuration.
+	c.cfg.clusterState = embed.ClusterStateFlagNew
+	c.cfg.initialPURLs = map[string]string{c.cfg.Name: peerURL(c.cfg.PrivateAddress, c.cfg.PeerSC.TLSEnabled())}
 
-	unlock, err := addMember(clientsAddresses, clientSC, []string{peerURL(privateAddress, peerSC.AutoTLS || !peerSC.TLSInfo().Empty())})
+	// Start the server.
+	ctx, cancel := context.WithTimeout(context.Background(), defaultStartTimeout)
+	defer cancel()
+	return c.startServer(ctx)
+}
+
+func (c *Server) Join(cluster *Client) error {
+	// List the existing members.
+	ctx, cancel := context.WithTimeout(context.Background(), defaultStartTimeout)
+	members, err := cluster.MemberList(ctx)
+	defer cancel()
+
 	if err != nil {
-		return nil, notRunning, fmt.Errorf("failed to add member to cluster: %v", err)
+		return fmt.Errorf("failed to list cluster's members: %v", err)
+	}
+
+	// Set the internal configuration.
+	c.cfg.initialPURLs = map[string]string{c.cfg.Name: peerURL(c.cfg.PrivateAddress, c.cfg.PeerSC.TLSEnabled())}
+	for _, member := range members.Members {
+		if member.Name == "" {
+			continue
+		}
+		c.cfg.initialPURLs[member.Name] = member.PeerURLs[0]
+	}
+	c.cfg.clusterState = embed.ClusterStateFlagExisting
+
+	// Check if we are listed as a member, and save the member ID if so.
+	var memberID uint64
+	for _, member := range members.Members {
+		if c.cfg.Name == member.Name {
+			memberID = member.ID
+			break
+		}
+	}
+	// Verify whether we have local data that would allow us to rejoin.
+	_, localSnapErr := localSnapshotProvider(c.cfg.DataDir).Info()
+
+	// Attempt to re-join the server directly if we are still a member, and we have local data.
+	if memberID != 0 && localSnapErr == nil {
+		log.Info("attempting to rejoin cluster under existing identity with local data")
+
+		ctx, cancel := context.WithTimeout(context.Background(), defaultStartRejoinTimeout)
+		defer cancel()
+		if err := c.startServer(ctx); err == nil {
+			return nil
+		}
+
+		log.Warn("failed to join as an existing member, resetting")
+		if err := cluster.RemoveMember(c.cfg.Name, memberID); err != nil {
+			log.WithError(err).Warning("failed to remove ourselves from the cluster's member list")
+		}
+	}
+	os.RemoveAll(c.cfg.DataDir)
+
+	// Add ourselves as a member.
+	memberID, unlock, err := cluster.AddMember(c.cfg.Name, []string{peerURL(c.cfg.PrivateAddress, c.cfg.PeerSC.TLSEnabled())})
+	if err != nil {
+		return fmt.Errorf("failed to add ourselves as a member of the cluster: %v", err)
 	}
 	defer unlock()
 
-	stop, isRunning, err := ss()
-	if err != nil {
-		return nil, notRunning, fmt.Errorf("failed to start server: %v", err)
-	}
-	return stop, isRunning, err
-}
-
-func startServer(state, name, dataDir string, dataQuota int64, publicAddress, privateAddress string, clientSC, peerSC SecurityConfig, peersAddresses map[string]string) (func(), func() bool, error) {
-	cfg := embed.NewConfig()
-	cfg.ClusterState = state
-	cfg.Name = name
-	cfg.Dir = dataDir
-	cfg.PeerAutoTLS = peerSC.AutoTLS
-	cfg.PeerTLSInfo = peerSC.TLSInfo()
-	cfg.ClientAutoTLS = clientSC.AutoTLS
-	cfg.ClientTLSInfo = clientSC.TLSInfo()
-	cfg.InitialCluster = initialCluster(peersAddresses, peerSC.TLSEnabled())
-	cfg.LPUrls, _ = types.NewURLs([]string{peerURL(privateAddress, peerSC.TLSEnabled())})
-	cfg.APUrls, _ = types.NewURLs([]string{peerURL(privateAddress, peerSC.TLSEnabled())})
-	cfg.LCUrls, _ = types.NewURLs([]string{clientURL(privateAddress, clientSC.TLSEnabled())})
-	cfg.ACUrls, _ = types.NewURLs([]string{clientURL(publicAddress, clientSC.TLSEnabled())})
-	cfg.ListenMetricsUrls = metricsURLs(privateAddress)
-	cfg.Metrics = "extensive"
-	cfg.QuotaBackendBytes = dataQuota
-
-	tTimeOut := time.Now().Add(defaultStartTimeout)
-	server, err := embed.StartEtcd(cfg)
-	if err != nil {
-		return nil, notRunning, err
-	}
-
-	running := true
-	stopServerCh := make(chan struct{})
-
-	isRunning := func() bool {
-		return running
-	}
-	stopServer := func() {
-		close(stopServerCh)
-		server.Server.Stop()
-		server.Close()
-		running = false
-	}
-
-	// Wait until the server announces its ready, or until timeout is exceeded.
-	select {
-	case <-server.Server.ReadyNotify():
-		break
-	case <-time.After(time.Until(tTimeOut)):
-		stopServer()
-		return nil, notRunning, fmt.Errorf("server took too long to start")
-	}
-
-	// Wait until the member is healthy, or until timeout is exceeded.
-	healthyNotify := make(chan struct{})
-	defer close(healthyNotify)
-
-	clientTC, err := clientSC.ClientConfig()
-	if err != nil {
-		return nil, notRunning, fmt.Errorf("failed to read client transport security: %s", err)
-	}
-
-	go func() {
-		healthySince := time.Time{}
-		for {
-			if time.Now().After(tTimeOut) {
-				break
-			}
-			if isMemberHealthy(clientURL(privateAddress, clientSC.TLSEnabled()), clientTC) {
-				if healthySince.IsZero() {
-					healthySince = time.Now()
-				}
-			} else {
-				healthySince = time.Time{}
-			}
-			if !healthySince.IsZero() && time.Since(healthySince) >= defaultStartHealthyThreshold {
-				healthyNotify <- struct{}{}
-				break
-			}
-			time.Sleep(1 * time.Second)
-		}
-	}()
-
-	select {
-	case <-healthyNotify:
-		break
-	case <-time.After(time.Until(tTimeOut)):
-		stopServer()
-		return nil, notRunning, fmt.Errorf("member never became healthy")
-	}
-
-	// Start go-routine to re-start the etcd server immediately if it crashed.
-	go func() {
-		for {
-			select {
-			case err := <-server.Err():
-				log.WithError(err).Warnf("etcd server crashed")
-				running = false
-			case <-stopServerCh:
-				return
-			}
-		}
-	}()
-
-	return stopServer, isRunning, nil
-}
-
-func addMember(clientsAddresses []string, sc SecurityConfig, pURLs []string) (func(), error) {
-	tc, err := sc.ClientConfig()
-	if err != nil {
-		return nil, fmt.Errorf("failed to read client transport security: %s", err)
-	}
-
-	c, err := newClient(clientsURLs(clientsAddresses, sc.TLSEnabled()), tc)
-	if err != nil {
-		return nil, err
-	}
-
-	unlock, err := lock(c, "add_member", defaultRequestTimeout)
-	if err != nil {
-		return nil, fmt.Errorf("unable to acquire lock to join Cluster: %v", err)
-		c.Close()
-	}
-	unlockClose := func() {
-		unlock()
-		c.Close()
-	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), defaultRequestTimeout)
+	// Start the server.
+	ctx, cancel = context.WithTimeout(context.Background(), defaultStartTimeout)
 	defer cancel()
-
-	_, err = c.MemberAdd(ctx, pURLs)
-	if err != nil {
-		unlockClose()
-		return nil, err
-	}
-
-	return unlockClose, nil
-}
-
-func RemoveMember(clientsAddresses []string, sc SecurityConfig, memberID uint64) error {
-	tc, err := sc.ClientConfig()
-	if err != nil {
-		return fmt.Errorf("failed to read client transport security: %s", err)
-	}
-
-	c, err := newClient(clientsURLs(clientsAddresses, sc.TLSEnabled()), tc)
-	if err != nil {
-		return err
-	}
-	defer c.Close()
-
-	ctx, cancel := context.WithTimeout(context.Background(), defaultRequestTimeout)
-	defer cancel()
-
-	_, err = c.MemberRemove(ctx, memberID)
-	if err != nil && err != rpctypes.ErrMemberNotFound {
+	if err := c.startServer(ctx); err != nil {
+		cluster.RemoveMember(c.cfg.Name, memberID)
 		return err
 	}
 	return nil
 }
 
-func lock(c *etcdcl.Client, name string, maxWait time.Duration) (func(), error) {
-	session, err := concurrency.NewSession(c)
-	if err != nil {
-		return nil, err
+func (c *Server) Restore(metadata *snapshot.Metadata) error {
+	log.Infof("restoring snapshot %q (rev: %016x, size: %.3f MB)", metadata.Name, metadata.Revision, toMB(metadata.Size))
+
+	path, shouldDelete, err := metadata.Source.Get(metadata)
+	if err != nil && err != snapshot.ErrNoSnapshot {
+		return fmt.Errorf("failed to retrieve latest snapshot: %v", err)
 	}
-	mutex := concurrency.NewMutex(session, name)
-
-	ctx, cancel := context.WithTimeout(context.Background(), maxWait)
-	defer cancel()
-
-	err = mutex.Lock(ctx)
-	if err != nil {
-		session.Close()
-		return nil, err
+	if shouldDelete {
+		defer os.Remove(path)
 	}
 
-	unlock := func() {
-		ctx, cancel := context.WithTimeout(context.Background(), defaultRequestTimeout)
-		mutex.Unlock(ctx)
-		cancel()
-		session.Close()
+	// Remove the existing data directory.
+	//
+	// We do it only after getting the snapshot, because in the case of the local 'etcd' snapshotter, the data is copied
+	// directly from the data directory, to a temporary file when Get is called.
+	os.RemoveAll(c.cfg.DataDir)
+
+	// TODO: Use https://github.com/coreos/etcd/blob/master/snapshot/v3_snapshot.go.
+	cmd := exec.Command("/bin/sh", "-ec",
+		fmt.Sprintf("ETCDCTL_API=3 etcdctl snapshot restore %[1]s"+
+			" --name %[2]s"+
+			" --initial-cluster %[2]s=%[3]s"+
+			" --initial-cluster-token %[4]s"+
+			" --initial-advertise-peer-urls %[3]s"+
+			" --data-dir %[5]s"+
+			" --skip-hash-check",
+			path, c.cfg.Name, peerURL(c.cfg.PrivateAddress, c.cfg.PeerSC.TLSEnabled()),
+			embed.NewConfig().InitialClusterToken, c.cfg.DataDir,
+		),
+	)
+	if out, err := cmd.CombinedOutput(); err != nil {
+		return fmt.Errorf("etcdctl failed to restore:\n %s", out)
 	}
-	return unlock, nil
+
+	return nil
 }
 
-func notRunning() bool {
-	return false
+func (c *Server) Snapshot() error {
+	t := time.Now()
+
+	// Purge old snapshots in the background.
+	go c.cfg.SnapshotProvider.Purge(c.cfg.SnapshotTTL)
+
+	// Get the latest snapshotted revision.
+	var minRev int64
+	if metadata, err := c.cfg.SnapshotProvider.Info(); err == nil {
+		minRev = metadata.Revision
+	} else {
+		if err != snapshot.ErrNoSnapshot {
+			log.WithError(err).Warn("failed to find latest snapshot revision, snapshotting anyways")
+		}
+	}
+
+	// Initiate a snapshot.
+	rc, rev, err := c.snapshot(minRev)
+	if err == ErrMemberRevisionTooOld {
+		log.Infof("skipping snapshot: current revision %016x <= latest snapshot %016x", rev, minRev)
+		return nil
+	}
+	if err != nil {
+		return fmt.Errorf("failed to initiate snapshot: %v", err)
+	}
+	defer rc.Close()
+
+	// Save the incoming snapshot.
+	metadata, _ := snapshot.NewMetadata(c.cfg.Name, rev, -1, c.cfg.SnapshotProvider)
+	if err := c.cfg.SnapshotProvider.Save(rc, metadata); err != nil {
+		return fmt.Errorf("failed to save snapshot: %v", err)
+	}
+
+	log.Infof("snapshot %q saved successfully in %v (%.2f MB)", metadata.Filename(), time.Since(t), toMB(metadata.Size))
+	return nil
+}
+
+func (c *Server) SnapshotInfo() (*snapshot.Metadata, error) {
+	var localSnap, cfgSnap *snapshot.Metadata
+	var localErr, cfgErr error
+
+	// Read snapshot info from the local etcd data, if etcd is not running (otherwise it'll get stuck).
+	if !c.isRunning {
+		localSnap, localErr = localSnapshotProvider(c.cfg.DataDir).Info()
+		if localErr != nil && localErr != snapshot.ErrNoSnapshot {
+			log.WithError(localErr).Warn("failed to retrieve local snapshot info")
+		}
+	}
+
+	// Read snapshot info from the configured snapshot provider.
+	cfgSnap, cfgErr = c.cfg.SnapshotProvider.Info()
+	if cfgErr != nil && cfgErr != snapshot.ErrNoSnapshot {
+		log.WithError(cfgErr).Warn("failed to retrieve snapshot info")
+	}
+
+	// Return the highest revision one, or the one that worked.
+	if localErr == snapshot.ErrNoSnapshot && cfgErr == snapshot.ErrNoSnapshot {
+		return nil, snapshot.ErrNoSnapshot
+	}
+	if localErr != nil && cfgErr != nil {
+		return nil, errors.New("failed to retrieve snapshot info")
+	}
+	if cfgErr != nil || (localErr == nil && localSnap.Revision > cfgSnap.Revision) {
+		return localSnap, nil
+	}
+	return cfgSnap, cfgErr
+}
+
+func (c *Server) snapshot(minRevision int64) (io.ReadCloser, int64, error) {
+	// Get the current revision and compare with the minimum requested revision.
+	revision := c.server.Server.KV().Rev()
+	if revision <= minRevision {
+		return nil, revision, ErrMemberRevisionTooOld
+	}
+
+	pr, pw := io.Pipe()
+	go func() {
+		// Get the snapshot object.
+		snapshot := c.server.Server.Backend().Snapshot()
+
+		// Forward the snapshot to the pipe.
+		n, err := snapshot.WriteTo(pw)
+		if err != nil {
+			log.WithError(err).Errorf("failed to write etcd snapshot out [written bytes: %d]", n)
+		}
+		pw.CloseWithError(err)
+
+		if err := snapshot.Close(); err != nil {
+			log.WithError(err).Errorf("failed to close etcd snapshot [written bytes: %d]", n)
+		}
+	}()
+
+	return pr, revision, nil
+}
+
+func (c *Server) IsRunning() bool {
+	return c.isRunning
+}
+
+func (c *Server) Stop(graceful, snapshot bool) {
+	if !c.isRunning {
+		return
+	}
+	if snapshot {
+		if err := c.Snapshot(); err != nil {
+			log.WithError(err).Error("failed to snapshot before graceful stop")
+		}
+	}
+	if !graceful {
+		c.server.Server.HardStop()
+		c.server.Server = nil
+	}
+	c.server.Close()
+	c.isRunning = false
+	return
+}
+
+func (c *Server) startServer(ctx context.Context) error {
+	var err error
+
+	// Configure the server.
+	etcdCfg := embed.NewConfig()
+	etcdCfg.ClusterState = c.cfg.clusterState
+	etcdCfg.Name = c.cfg.Name
+	etcdCfg.Dir = c.cfg.DataDir
+	etcdCfg.PeerAutoTLS = c.cfg.PeerSC.AutoTLS
+	etcdCfg.PeerTLSInfo = c.cfg.PeerSC.TLSInfo()
+	etcdCfg.ClientAutoTLS = c.cfg.ClientSC.AutoTLS
+	etcdCfg.ClientTLSInfo = c.cfg.ClientSC.TLSInfo()
+	etcdCfg.InitialCluster = initialCluster(c.cfg.initialPURLs)
+	etcdCfg.LPUrls, _ = types.NewURLs([]string{peerURL(c.cfg.PrivateAddress, c.cfg.PeerSC.TLSEnabled())})
+	etcdCfg.APUrls, _ = types.NewURLs([]string{peerURL(c.cfg.PrivateAddress, c.cfg.PeerSC.TLSEnabled())})
+	etcdCfg.LCUrls, _ = types.NewURLs([]string{ClientURL(c.cfg.PrivateAddress, c.cfg.ClientSC.TLSEnabled())})
+	etcdCfg.ACUrls, _ = types.NewURLs([]string{ClientURL(c.cfg.PublicAddress, c.cfg.ClientSC.TLSEnabled())})
+	etcdCfg.ListenMetricsUrls = metricsURLs(c.cfg.PrivateAddress)
+	etcdCfg.Metrics = "extensive"
+	etcdCfg.QuotaBackendBytes = c.cfg.DataQuota
+
+	// Start the server.
+	c.server, err = embed.StartEtcd(etcdCfg)
+
+	// Discard the gRPC logs, as the embed server will set that regardless of what was set before (i.e. at startup).
+	etcdcl.SetLogger(grpclog.NewLoggerV2(ioutil.Discard, ioutil.Discard, os.Stderr))
+
+	if err != nil {
+		return fmt.Errorf("failed to start etcd: %s", err)
+	}
+	c.isRunning = true
+
+	// Wait until the server announces its ready, or until the start timeout is exceeded.
+	//
+	// When the server is joining an existing Client, it won't be until it has received a snapshot from healthy
+	// members and sync'd from there.
+	select {
+	case <-c.server.Server.ReadyNotify():
+		break
+	case <-c.server.Err():
+		// FIXME.
+		panic("server failed to start, and continuing might stale the application, exiting instead (github.com/coreos/etcd/issues/9533)")
+		c.Stop(false, false)
+		return fmt.Errorf("server failed to start: %s", err)
+	case <-ctx.Done():
+		// FIXME.
+		panic("server failed to start, and continuing might stale the application, exiting instead (github.com/coreos/etcd/issues/9533)")
+		c.Stop(false, false)
+		return fmt.Errorf("server took too long to become ready")
+	}
+
+	go c.runErrorWatcher()
+	go c.runMemberCleaner()
+	go c.runSnapshotter()
+
+	return nil
+}
+
+func (c *Server) runErrorWatcher() {
+	select {
+	case <-c.server.Server.StopNotify():
+		log.Warnf("etcd server is stopping")
+		c.isRunning = false
+		return
+	case <-c.server.Err():
+		log.Warnf("etcd server has crashed")
+		c.Stop(false, false)
+	}
+}
+
+func (c *Server) runMemberCleaner() {
+	type memberT struct {
+		name            string
+		firstSeen       time.Time
+		lastSeenHealthy time.Time
+	}
+	members := make(map[types.ID]*memberT)
+
+	t := time.NewTicker(defaultMemberCleanerInterval)
+	defer t.Stop()
+
+	for {
+		<-t.C
+		if !c.IsRunning() {
+			return
+		}
+
+		for _, member := range c.server.Server.Cluster().Members() {
+			if !member.IsStarted() {
+				continue
+			}
+
+			// Register the member's first seen time if it's a new member.
+			if _, ok := members[member.ID]; !ok {
+				members[member.ID] = &memberT{name: member.Name, firstSeen: time.Now()}
+			}
+
+			// Determine if the member is healthy and set the last time the member has been seen healthy.
+			if c, err := NewClient([]string{URL2Address(member.PeerURLs[0])}, c.cfg.ClientSC, false); err == nil {
+				if c.IsHealthy(5, 5*time.Second) {
+					members[member.ID].lastSeenHealthy = time.Now()
+				}
+				c.Close()
+			}
+		}
+
+		for id, member := range members {
+			// Give the member time to start if it's a new one.
+			if time.Since(member.firstSeen) < defaultStartTimeout && (member.lastSeenHealthy == time.Time{}) {
+				continue
+			}
+			// Allow the member a graceful period.
+			if time.Since(member.lastSeenHealthy) < c.cfg.UnhealthyMemberTTL {
+				continue
+			}
+			log.Infof("removing member %q that's been unhealthy for %v", member.name, c.cfg.UnhealthyMemberTTL)
+
+			cl, err := NewClient([]string{c.cfg.PrivateAddress}, c.cfg.ClientSC, false)
+			if err != nil {
+				log.WithError(err).Warn("failed to create etcd cluster client")
+				continue
+			}
+			if err := cl.RemoveMember(member.name, uint64(id)); err == context.DeadlineExceeded {
+				log.Warnf("failed to remove unhealthy member %q, it might be starting", member.name)
+				continue
+			} else if err != nil {
+				log.WithError(err).Warn("failed to remove unhealthy member %q")
+				continue
+			}
+
+			delete(members, id)
+		}
+	}
+}
+
+func (c *Server) runSnapshotter() {
+	if c.cfg.SnapshotProvider == nil || c.cfg.SnapshotInterval == 0 {
+		log.Warn("periodic snapshots are disabled")
+		return
+	}
+
+	t := time.NewTicker(c.cfg.SnapshotInterval)
+	defer t.Stop()
+
+	for {
+		<-t.C
+		if !c.IsRunning() {
+			return
+		}
+
+		c.Snapshot()
+	}
 }

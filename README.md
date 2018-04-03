@@ -1,36 +1,40 @@
 # etcd-cloud-operator
 
-Inspired by the [etcd-operator] designed for Kubernetes, the etcd-cloud-operator
-manages etcd clusters deployed on cloud providers and helps human operators keep
-the data store running safely, even in the event of availability-zone wide
-failures.
+Maintained by a former CoreOS engineer and inspired from the [etcd-operator]
+designed for Kubernetes, the etcd-cloud-operator automatically bootstraps, 
+monitors, snapshots and recovers etcd clusters on cloud providers.
 
 Used in place of the etcd binary and with minimal configuration, the operator
-handles the configuration and lifecycle of etcd, based on data gathered from
+handles the configuration and lifecycle of etcd, based on data gathered from 
 the cloud provider and the status of the etcd cluster itself.
 
-The operator makes the assumption that it can trust the cloud provider's
-auto-scaling group feature to provide accurate information regarding the number
-of launched instances, and to automatically kill/re-provision crashed ones (e.g.
-when an rack switch went down or simply when the service health check has been
-failing for an extended amount of time).
+In other words, the operator operator is meant to help human operators sleep
+at night, while their mysterious etcd data store keeps running safely, even
+in the event of process, instance, network, or even availability-zone wide
+failures.
 
 ## Features
 
-- *Failure recovery*: Upon failure of a minority of the etcd members, the
- operator will automatically attempt to restart (rejoin if necessary) the member
- it manages, thus recovering from the failure.
-- *Disaster recovery*: In the event of a failure of the majority of the members,
- resulting in the loss of quorum, the operator may try (if enabled) to seed a
- new cluster from a backup, once the expected amount of instances are present
- and the failed etcd cluster has been shot in the head (after forced backup of
- its remaining healthy members).
-- *Snapshots*: The operator realizes backups of each etcd member periodically,
- to enable automated disaster recovery or manual recovery in case of force
- majeure.
-- *Resize*: By abstracting the cluster management, resizing the cluster becomes
+- *Resize*: By abstracting cluster management, resizing the cluster becomes
  straightforward as the underlying auto-scaling group can simply be scaled as
  desired.
+ 
+- *Snapshots*: Periodically, snapshots of the entire key-value space are 
+ captured, from each of the etcd members and uploaded to an encrypted external
+ storage, allowing the etcd (or human) operator to restore the store at a later
+ time, in any etcd cluster or instance.
+  
+- *Failure recovery*: Upon failure of a minority of the etcd members, the
+ managed members automatically restarts and rejoins the cluster without
+ breaking quorum or causing visible downtime - First by simply trying to rejoin
+ with their existing data set, otherwise trying to join as a new member with a
+ clean state, or by replacing the entire instance if necessary.
+ 
+- *Disaster recovery*: In the event of a quorum loss, consequence of the 
+ simultaneous failure of a majority of the members, the operator coordinates
+ to snapshot any live members and cleanly stop then, before seeding a new cluster
+ from the latest data revision available once the expected amount of instances
+ are ready to start again.
 
 The operator and etcd cluster can be easily configured using a [YAML file]. The
 configuration notably includes clients/peers TLS encryption/authentication, with
@@ -42,15 +46,8 @@ is desired but authentication is not.
 Running a managed etcd cluster using the operator is simply a matter of running
 the operator binary in a supported auto-scaling group (as of today, AWS only).
 
-A Terraform [module] is available to easily try the operator out or integrate it
-into your infrastructure.
-
-## Additional areas of interest
-
-- Exposing Prometheus data about the cluster's health and resource usage,
-including the availability zones spread where etcd is deployed.
-- Document use-cases, user-stories and statistics regarding failures.
-- Adding support for major cloud-providers, such as Azure and GKE.
+A Terraform [module] is available to easily bring up production-grade etcd clusters
+managed by the the operator out, and integrate them into your infrastructure.
 
 [etcd-operator]: https://github.com/coreos/etcd-operator
 [YAML file]: config.example.yaml

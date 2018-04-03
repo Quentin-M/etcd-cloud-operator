@@ -58,10 +58,10 @@ func (a *aws) Configure(providerConfig asg.Config) error {
 	return nil
 }
 
-func (a *aws) AutoScalingGroupStatus() (instances []asg.Instance, self, asgLeader asg.Instance, asgScaled bool, err error) {
+func (a *aws) AutoScalingGroupStatus() (instances []asg.Instance, self asg.Instance, size int, err error) {
 	asg, reservations, err := a.describeASG()
 	if err != nil {
-		return nil, nil, nil, false, err
+		return nil, nil, 0, err
 	}
 
 	for _, reservation := range reservations {
@@ -76,12 +76,9 @@ func (a *aws) AutoScalingGroupStatus() (instances []asg.Instance, self, asgLeade
 			if instance.name == a.instanceID {
 				self = instance
 			}
-			if asgLeader == nil || strings.Compare(instance.name, asgLeader.Name()) < 0 {
-				asgLeader = instance
-			}
 		}
 	}
-	asgScaled = int(*asg.DesiredCapacity) == len(instances)
+	size = int(*asg.DesiredCapacity)
 
 	return
 }
@@ -92,31 +89,31 @@ func (a *aws) describeASG() (*autoscaling.Group, []*ec2.Reservation, error) {
 		if err != nil {
 			return nil, nil, fmt.Errorf("failed to create aws session: %v", err)
 		}
-		
+
 		ec2meta := ec2metadata.New(sess)
 		if !ec2meta.Available() {
 			return nil, nil, errors.New("application is not running on aws ec2")
 		}
-		
+
 		instanceIdentity, err := ec2meta.GetInstanceIdentityDocument()
 		if err != nil {
 			return nil, nil, fmt.Errorf("failed to retrieve aws ec2 instance identity: %v", err)
 		}
 		a.instanceID = instanceIdentity.InstanceID
-		
+
 		a.region, err = ec2meta.Region()
 		if err != nil {
 			return nil, nil, fmt.Errorf("failed to retrieve aws ec2 region: %v", err)
 		}
 	}
-	
+
 	sess, err := session.NewSession(aaws.NewConfig().WithRegion(a.region))
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to create aws session: %v", err)
 	}
 	as := autoscaling.New(sess)
 	ec2s := ec2.New(sess)
-	
+
 	if a.asgName == "" {
 		asgInstance, err := as.DescribeAutoScalingInstances(&autoscaling.DescribeAutoScalingInstancesInput{
 			InstanceIds: []*string{aaws.String(a.instanceID)},

@@ -40,11 +40,11 @@ resource "aws_elb" "clients" {
   }
 
   health_check {
-    healthy_threshold   = 2
-    unhealthy_threshold = 4
-    timeout             = 5
+    healthy_threshold   = 6
+    unhealthy_threshold = 2
+    timeout             = 3
     target              = "TCP:2379"
-    interval            = 15
+    interval            = 5
   }
 }
 
@@ -73,9 +73,9 @@ resource "aws_security_group" "elb" {
 }
 
 locals {
-  asg_provider        = "aws"
-  snapshot_provider   = "s3"
-  unseen_instance_ttl = "60s"
-  snapshot_bucket     = "${aws_s3_bucket.backups.bucket}"
-  advertise_address   = "${var.route53_zone_id != "" ? aws_route53_record.elb.name : aws_elb.clients.dns_name }"
+  asg_provider         = "aws"
+  snapshot_provider    = "s3"
+  unhealthy_member_ttl = "3m"
+  snapshot_bucket      = "${aws_s3_bucket.backups.bucket}"
+  advertise_address    = "${var.route53_zone_id != "" ? aws_route53_record.elb.name : aws_elb.clients.dns_name }"
 }

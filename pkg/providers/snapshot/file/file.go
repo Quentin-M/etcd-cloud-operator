@@ -20,6 +20,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"sort"
 	"time"
 
 	"github.com/quentin-m/etcd-cloud-operator/pkg/providers"
@@ -52,52 +53,62 @@ func (f *file) Configure(providerConfig snapshot.Config) error {
 	return nil
 }
 
-func (f *file) Save(r io.ReadCloser, name string, rev int64) (int64, error) {
-	fname := snapshot.Name(rev, name)
-	fpath := filepath.Join(f.config.Dir, fname)
-
-	tmpF, err := ioutil.TempFile("", fname)
+func (f *file) Save(r io.ReadCloser, metadata *snapshot.Metadata) error {
+	tmpF, err := ioutil.TempFile("", metadata.Filename())
 	if err != nil {
-		return 0, err
+		return err
 	}
 
 	n, err := io.Copy(tmpF, r)
 	if err != nil {
 		tmpF.Close()
 		os.Remove(tmpF.Name())
-		return 0, err
+		return err
 	}
 
 	tmpF.Sync()
 	tmpF.Close()
 
+	fpath := filepath.Join(f.config.Dir, metadata.Filename())
 	if err = os.Rename(tmpF.Name(), fpath); err != nil {
 		os.Remove(tmpF.Name())
-		return 0, err
+		return err
 	}
 	os.Chmod(fpath, filePermissions)
 
-	return n, nil
+	metadata.Size = n
+	return nil
 }
 
-func (f *file) Latest() (io.ReadCloser, int64, int64, error) {
-	path, rev, err := f.latestSnapshotFileName()
+func (f *file) Info() (*snapshot.Metadata, error) {
+	files, err := ioutil.ReadDir(f.config.Dir)
 	if err != nil {
-		return nil, 0, 0, err
+		return nil, fmt.Errorf("failed to list dir: %s", err)
 	}
 
-	rc, err := os.Open(filepath.Join(f.config.Dir, path))
-	if err != nil {
-		return nil, 0, 0, err
-	}
+	var metadatas []*snapshot.Metadata
+	for _, file := range files {
+		if file.IsDir() {
+			continue
+		}
 
-	st, _ := rc.Stat()
-	return rc, st.Size(), rev, err
+		metadata, err := snapshot.NewMetadata(file.Name(), -1, file.Size(), f)
+		if err != nil {
+			log.Warnf("failed to parse metadata for snapshot %v", file.Name())
+			continue
+		}
+		metadatas = append(metadatas, metadata)
+	}
+	if len(metadatas) == 0 {
+		return nil, snapshot.ErrNoSnapshot
+	}
+	sort.Sort(snapshot.MetadataSorter(metadatas))
+
+	return metadatas[len(metadatas)-1], nil
 }
 
-func (f *file) LatestRev() (int64, error) {
-	_, rev, err := f.latestSnapshotFileName()
-	return rev, err
+func (f *file) Get(metadata *snapshot.Metadata) (string, bool, error) {
+	return filepath.Join(f.config.Dir, metadata.Name), false, nil
 }
 
 func (f *file) Purge(ttl time.Duration) error {
@@ -113,21 +124,4 @@ func (f *file) Purge(ttl time.Duration) error {
 		}
 	}
 	return nil
-}
-
-func (f *file) latestSnapshotFileName() (string, int64, error) {
-	files, err := ioutil.ReadDir(f.config.Dir)
-	if err != nil {
-		return "", 0, fmt.Errorf("failed to list dir: %s", err)
-	}
-
-	var names []string
-	for _, f := range files {
-		if f.IsDir() {
-			continue
-		}
-		names = append(names, f.Name())
-	}
-
-	return snapshot.LatestFromNames(names)
 }

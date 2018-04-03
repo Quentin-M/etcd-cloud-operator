@@ -18,11 +18,13 @@ import (
 	"crypto/tls"
 	"fmt"
 	"net/url"
+	"strconv"
 	"strings"
 	"time"
 
-	etcdcl "github.com/coreos/etcd/clientv3"
 	"github.com/coreos/etcd/pkg/transport"
+
+	"github.com/quentin-m/etcd-cloud-operator/pkg/providers/snapshot"
 )
 
 const (
@@ -32,7 +34,7 @@ const (
 
 	defaultDialTimeout    = 5 * time.Second
 	defaultRequestTimeout = 5 * time.Second
-	defaultAutoSync       = 5 * time.Second
+	defaultAutoSync       = 1 * time.Second
 )
 
 // EtcdConfiguration contains the configuration related to the underlying etcd
@@ -85,23 +87,14 @@ func (sc SecurityConfig) TLSEnabled() bool {
 	return sc.AutoTLS || !sc.TLSInfo().Empty()
 }
 
-func newClient(clientsURLs []string, tlsConfig *tls.Config) (*etcdcl.Client, error) {
-	return etcdcl.New(etcdcl.Config{
-		Endpoints:        clientsURLs,
-		DialTimeout:      defaultDialTimeout,
-		TLS:              tlsConfig,
-		AutoSyncInterval: defaultAutoSync,
-	})
-}
-
-func clientsURLs(addresses []string, tlsEnabled bool) (cURLs []string) {
+func ClientsURLs(addresses []string, tlsEnabled bool) (cURLs []string) {
 	for _, address := range addresses {
-		cURLs = append(cURLs, clientURL(address, tlsEnabled))
+		cURLs = append(cURLs, ClientURL(address, tlsEnabled))
 	}
 	return
 }
 
-func clientURL(address string, tlsEnabled bool) string {
+func ClientURL(address string, tlsEnabled bool) string {
 	return fmt.Sprintf("%s://%s:%d", scheme(tlsEnabled), address, defaultClientPort)
 }
 
@@ -109,15 +102,23 @@ func peerURL(address string, tlsEnabled bool) string {
 	return fmt.Sprintf("%s://%s:%d", scheme(tlsEnabled), address, defaultPeerPort)
 }
 
+func URL2Address(pURL string) string {
+	pURLu, _ := url.Parse(pURL)
+	if i := strings.Index(pURLu.Host, ":"); i > 0 {
+		return pURLu.Host[:i]
+	}
+	return pURLu.Host
+}
+
 func metricsURLs(address string) []url.URL {
 	u, _ := url.Parse(fmt.Sprintf("http://%s:%d", address, defaultMetricsPort))
 	return []url.URL{*u}
 }
 
-func initialCluster(addresses map[string]string, tlsEnabled bool) string {
+func initialCluster(pURLs map[string]string) string {
 	var ic []string
-	for name, address := range addresses {
-		ic = append(ic, fmt.Sprintf("%s=%s://%s:%d", name, scheme(tlsEnabled), address, defaultPeerPort))
+	for name, pURL := range pURLs {
+		ic = append(ic, fmt.Sprintf("%s=%s", name, pURL))
 	}
 	return strings.Join(ic, ",")
 }
@@ -127,4 +128,29 @@ func scheme(tlsEnabled bool) string {
 		return "https"
 	}
 	return "http"
+}
+
+func toMB(s int64) float64 {
+	sn := fmt.Sprintf("%.2f", float64(s)/(1024*1024))
+	n, _ := strconv.ParseFloat(sn, 64)
+	return n
+}
+
+func getSameValue(vals map[string]int64) bool {
+	var rv int64
+	for _, v := range vals {
+		if rv == 0 {
+			rv = v
+		}
+		if rv != v {
+			return false
+		}
+	}
+	return true
+}
+
+func localSnapshotProvider(dataDir string) snapshot.Provider {
+	lsp := snapshot.AsMap()["etcd"]
+	lsp.Configure(snapshot.Config{Params: map[string]interface{}{"data-dir": dataDir}})
+	return lsp
 }

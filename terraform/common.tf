@@ -21,7 +21,7 @@
 // locals {
 //   asg_provider = ""
 //   snapshot_provider = ""
-//   unseen_instance_ttl
+//   unhealthy_member_ttl = 0
 //   advertise_address = ""
 //   snapshot_bucket = ""
 // }
@@ -35,7 +35,7 @@ variable "instance_ssh_keys" {
 
 variable "eco_image" {
   description = "Container image of ECO to use"
-  default     = "qmachu/etcd-cloud-operator-dev:latest"
+  default     = "qmachu/etcd-cloud-operator:latest"
 }
 
 variable "eco_enable_tls" {
@@ -45,10 +45,6 @@ variable "eco_enable_tls" {
 
 variable "eco_require_client_certs" {
   description = "Defines whether etcd should expect client certificates for client connections"
-}
-
-variable "eco_auto_disaster_recovery" {
-  description = "Defines whether automatic disaster recovery on ECO should be enabled"
 }
 
 variable "eco_snapshot_interval" {
@@ -91,16 +87,15 @@ module "configuration" {
   eco_asg_provider      = "${local.asg_provider}"
   eco_snapshot_provider = "${local.snapshot_provider}"
 
-  eco_unseen_instance_ttl = "${local.unseen_instance_ttl}"
-  eco_advertise_address   = "${local.advertise_address}"
-  eco_snapshot_bucket     = "${local.snapshot_bucket}"
+  eco_unhealthy_member_ttl = "${local.unhealthy_member_ttl}"
+  eco_advertise_address    = "${local.advertise_address}"
+  eco_snapshot_bucket      = "${local.snapshot_bucket}"
 
   eco_ca_file             = "${var.eco_enable_tls == true ? module.ignition.eco_ca_file : ""}"
   eco_cert_file           = "${var.eco_enable_tls == true ? module.ignition.eco_cert_file : ""}"
   eco_key_file            = "${var.eco_enable_tls == true ? module.ignition.eco_key_file : ""}"
   eco_require_client_cert = "${var.eco_require_client_certs}"
 
-  eco_enable_auto_disaster_recovery = "${var.eco_auto_disaster_recovery}"
   eco_snapshot_interval             = "${var.eco_snapshot_interval}"
   eco_snapshot_ttl                  = "${var.eco_snapshot_ttl}"
 

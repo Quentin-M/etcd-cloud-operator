@@ -18,16 +18,20 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/ioutil"
+	"os"
+	"sort"
 	"time"
-	
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/ec2metadata"
 	"github.com/aws/aws-sdk-go/aws/session"
 	ss3 "github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
+	log "github.com/sirupsen/logrus"
+
 	"github.com/quentin-m/etcd-cloud-operator/pkg/providers"
 	"github.com/quentin-m/etcd-cloud-operator/pkg/providers/snapshot"
-	log "github.com/sirupsen/logrus"
 )
 
 func init() {
@@ -51,35 +55,35 @@ func (s *s3) Configure(providerConfig snapshot.Config) error {
 	if s.config.Bucket == "" {
 		return errors.New("invalid configuration: bucket name is missing")
 	}
-	
+
 	sess, err := session.NewSession()
 	if err != nil {
 		return fmt.Errorf("failed to create aws session: %v", err)
 	}
-	
+
 	ec2meta := ec2metadata.New(sess)
 	if !ec2meta.Available() {
 		return errors.New("application is not running on aws ec2")
 	}
-	
+
 	s.region, err = ec2meta.Region()
 	if err != nil {
 		return fmt.Errorf("failed to retrieve aws ec2 region: %v", err)
 	}
-	
-	if _, _, err := s.latestSnapshotKey(); err != nil && err != snapshot.ErrNoSnapshot {
+
+	if _, err := s.Info(); err != nil && err != snapshot.ErrNoSnapshot {
 		return fmt.Errorf("failed to validate aws s3 configuration: %v", err)
 	}
-	
+
 	return nil
 }
 
-func (s *s3) Save(r io.ReadCloser, name string, rev int64) (int64, error) {
-	key := snapshot.Name(rev, name)
+func (s *s3) Save(r io.ReadCloser, metadata *snapshot.Metadata) error {
+	key := metadata.Filename()
 
 	sess, err := session.NewSession(aws.NewConfig().WithRegion(s.region))
 	if err != nil {
-		return 0, fmt.Errorf("failed to create aws session: %v", err)
+		return fmt.Errorf("failed to create aws session: %v", err)
 	}
 	s3s := ss3.New(sess)
 
@@ -89,7 +93,8 @@ func (s *s3) Save(r io.ReadCloser, name string, rev int64) (int64, error) {
 		Body:   r,
 	})
 	if err != nil {
-		return 0, fmt.Errorf("failed to upload aws s3 object: %v", err)
+		s3s.DeleteObject(&ss3.DeleteObjectInput{})
+		return fmt.Errorf("failed to upload aws s3 object: %v", err)
 	}
 
 	resp, err := s3s.HeadObject(&ss3.HeadObjectInput{
@@ -98,38 +103,66 @@ func (s *s3) Save(r io.ReadCloser, name string, rev int64) (int64, error) {
 	})
 	if err != nil {
 		log.WithError(err).Warnf("failed to get aws s3 object size for %q")
-		return 0, nil
+		return nil
 	}
 
-	return *resp.ContentLength, err
+	metadata.Size = *resp.ContentLength
+	return nil
 }
 
-func (s *s3) Latest() (io.ReadCloser, int64, int64, error) {
-	key, rev, err := s.latestSnapshotKey()
-	if err != nil {
-		return nil, 0, 0, err
-	}
-
+func (s *s3) Get(metadata *snapshot.Metadata) (string, bool, error) {
 	sess, err := session.NewSession(aws.NewConfig().WithRegion(s.region))
 	if err != nil {
-		return nil, 0, 0, fmt.Errorf("failed to create aws session: %v", err)
+		return "", true, fmt.Errorf("failed to create aws session: %v", err)
+	}
+
+	f, err := ioutil.TempFile("", "")
+	if err != nil {
+		return "", true, err
+	}
+
+	if _, err := s3manager.NewDownloader(sess).Download(f, &ss3.GetObjectInput{
+		Bucket: aws.String(s.config.Bucket),
+		Key:    aws.String(metadata.Name),
+	}); err != nil {
+		f.Close()
+		os.Remove(f.Name())
+		return "", true, fmt.Errorf("failed to get aws s3 object: %v", err)
+	}
+
+	f.Sync()
+	f.Close()
+
+	return f.Name(), true, nil
+}
+
+func (s *s3) Info() (*snapshot.Metadata, error) {
+	sess, err := session.NewSession(aws.NewConfig().WithRegion(s.region))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create aws session: %v", err)
 	}
 	s3s := ss3.New(sess)
 
-	resp, err := s3s.GetObject(&ss3.GetObjectInput{
-		Bucket: aws.String(s.config.Bucket),
-		Key:    aws.String(key),
-	})
+	resp, err := s3s.ListObjects(&ss3.ListObjectsInput{Bucket: aws.String(s.config.Bucket)})
 	if err != nil {
-		return nil, 0, 0, fmt.Errorf("failed to get aws s3 object: %v", err)
+		return nil, fmt.Errorf("failed to list aws s3 objects: %v", err)
 	}
 
-	return resp.Body, *resp.ContentLength, rev, nil
-}
+	var metadatas []*snapshot.Metadata
+	for _, obj := range resp.Contents {
+		metadata, err := snapshot.NewMetadata(*obj.Key, -1, *obj.Size, s)
+		if err != nil {
+			log.Warnf("failed to parse metadata for snapshot %v", *obj.Key)
+			continue
+		}
+		metadatas = append(metadatas, metadata)
+	}
+	if len(metadatas) == 0 {
+		return nil, snapshot.ErrNoSnapshot
+	}
+	sort.Sort(snapshot.MetadataSorter(metadatas))
 
-func (s *s3) LatestRev() (int64, error) {
-	_, rev, err := s.latestSnapshotKey()
-	return rev, err
+	return metadatas[len(metadatas)-1], nil
 }
 
 func (s *s3) Purge(ttl time.Duration) error {
@@ -159,24 +192,4 @@ func (s *s3) Purge(ttl time.Duration) error {
 	}
 
 	return nil
-}
-
-func (s *s3) latestSnapshotKey() (string, int64, error) {
-	sess, err := session.NewSession(aws.NewConfig().WithRegion(s.region))
-	if err != nil {
-		return "", 0, fmt.Errorf("failed to create aws session: %v", err)
-	}
-	s3s := ss3.New(sess)
-
-	resp, err := s3s.ListObjects(&ss3.ListObjectsInput{Bucket: aws.String(s.config.Bucket)})
-	if err != nil {
-		return "", 0, fmt.Errorf("failed to list aws s3 objects: %v", err)
-	}
-
-	var names []string
-	for _, obj := range resp.Contents {
-		names = append(names, *obj.Key)
-	}
-
-	return snapshot.LatestFromNames(names)
 }

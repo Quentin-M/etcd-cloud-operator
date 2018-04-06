@@ -1,0 +1,8 @@
+eco-tester:
+  cluster:
+    address: <cluster's load balancer address>
+    size: 3
+    tls:
+      cert-file: client.crt
+      key-file: client.key
+      trusted-ca-file: ca.crt

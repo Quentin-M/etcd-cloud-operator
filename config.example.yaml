@@ -1,9 +1,8 @@
 eco:
   # The interval between each cluster verification by the operator.
-  check-interval: 30s
-  # The time after which, the member of an instance unseen for that duration,
-  # will be removed from the cluster.
-  unseen-instance-ttl: 60s
+  check-interval: 15s
+  # The time after which, an unhealthy member will be removed from the cluster.
+  unhealthy-member-ttl: 30s
   # Defines whether the operator will attempt to seed a new cluster from a
   # snapshot after the managed cluster has lost quorum.
   auto-disaster-recovery: true

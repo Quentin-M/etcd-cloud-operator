@@ -15,6 +15,7 @@
 package snapshot
 
 import (
+	"errors"
 	"io"
 	"sync"
 	"time"
@@ -23,14 +24,16 @@ import (
 var (
 	providers  = make(map[string]Provider)
 	providersM sync.RWMutex
+
+	ErrNoSnapshot = errors.New("no snapshot available")
 )
 
 type Provider interface {
 	Configure(Config) error
 
-	Save(io.ReadCloser, string, int64) (int64, error)
-	Latest() (io.ReadCloser, int64, int64, error)
-	LatestRev() (int64, error)
+	Save(io.ReadCloser, *Metadata) error
+	Get(*Metadata) (string, bool, error)
+	Info() (*Metadata, error)
 	Purge(time.Duration) error
 }
 
@@ -38,7 +41,7 @@ type Provider interface {
 type Config struct {
 	Interval time.Duration `yaml:"interval"`
 	TTL      time.Duration `yaml:"ttl"`
-	
+
 	Provider string                 `yaml:"provider"`
 	Params   map[string]interface{} `yaml:",inline"`
 }

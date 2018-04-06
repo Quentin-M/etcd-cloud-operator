@@ -31,7 +31,7 @@ type Instance interface {
 type Provider interface {
 	Configure(Config) error
 
-	AutoScalingGroupStatus() ([]Instance, Instance, Instance, bool, error)
+	AutoScalingGroupStatus() ([]Instance, Instance, int, error)
 }
 
 // Config represents the configuration of the auto-scaling group provider.

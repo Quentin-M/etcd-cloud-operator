@@ -17,22 +17,13 @@ package main
 
 import (
 	"flag"
-	"io/ioutil"
 	"os"
 	"strings"
 
-	etcdcl "github.com/coreos/etcd/clientv3"
 	"github.com/coreos/pkg/capnslog"
 	log "github.com/sirupsen/logrus"
-	"google.golang.org/grpc/grpclog"
 
-	"github.com/quentin-m/etcd-cloud-operator/pkg/operator"
-
-	// Register providers.
-	_ "github.com/quentin-m/etcd-cloud-operator/pkg/providers/asg/aws"
-	_ "github.com/quentin-m/etcd-cloud-operator/pkg/providers/asg/docker"
-	_ "github.com/quentin-m/etcd-cloud-operator/pkg/providers/snapshot/file"
-	_ "github.com/quentin-m/etcd-cloud-operator/pkg/providers/snapshot/s3"
+	"github.com/quentin-m/etcd-cloud-operator/pkg/tester"
 )
 
 func main() {
@@ -48,7 +39,6 @@ func main() {
 	log.SetLevel(logLevel)
 	log.SetFormatter(&log.TextFormatter{FullTimestamp: true})
 	capnslog.MustRepoLogger("github.com/coreos/etcd").SetLogLevel(map[string]capnslog.LogLevel{"etcdserver/api/v3rpc": capnslog.CRITICAL})
-	etcdcl.SetLogger(grpclog.NewLoggerV2(ioutil.Discard, ioutil.Discard, os.Stderr))
 
 	// Read configuration.
 	config, err := loadConfig(*flagConfigPath)
@@ -57,5 +47,5 @@ func main() {
 	}
 
 	// Run.
-	operator.New(config.ECO).Run()
+	tester.Run(config.ECOTester)
 }

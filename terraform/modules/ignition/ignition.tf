@@ -18,6 +18,7 @@ data "ignition_config" "main" {
     "${data.ignition_file.eco-ca.id}",
     "${data.ignition_file.eco-crt.id}",
     "${data.ignition_file.eco-key.id}",
+    "${data.ignition_file.eco-health.id}",
     "${data.ignition_file.e.id}"
   ]
 
@@ -26,6 +27,7 @@ data "ignition_config" "main" {
     "${data.ignition_systemd_unit.locksmithd.id}",
     "${data.ignition_systemd_unit.update-engine.id}",
     "${data.ignition_systemd_unit.eco.id}",
+    "${data.ignition_systemd_unit.eco-health.id}",
     "${data.ignition_systemd_unit.node-exporter.id}",
   ]
 
@@ -59,7 +61,7 @@ data "ignition_systemd_unit" "update-engine" {
 }
 
 data "template_file" "eco-service" {
-  template = "${file("${path.module}/eco.service")}"
+  template = "${file("${path.module}/resources/eco.service")}"
 
   vars {
     image = "${var.eco_image}"
@@ -71,9 +73,14 @@ data "ignition_systemd_unit" "eco" {
   content = "${data.template_file.eco-service.rendered}"
 }
 
+data "ignition_systemd_unit" "eco-health" {
+  name    = "eco-health.service"
+  content = "${file("${path.module}/resources/eco-health.service")}"
+}
+
 data "ignition_systemd_unit" "node-exporter" {
   name    = "node-exporter.service"
-  content = "${file("${path.module}/node-exporter.service")}"
+  content = "${file("${path.module}/resources/node-exporter.service")}"
 }
 
 data "ignition_file" "eco-config" {
@@ -122,6 +129,16 @@ data "ignition_file" "e" {
   mode       = 0755
 
   content {
-    content = "${file("${path.module}/e")}"
+    content = "${file("${path.module}/resources/e")}"
+  }
+}
+
+data "ignition_file" "eco-health" {
+  filesystem = "root"
+  path       = "/opt/bin/eco-health.sh"
+  mode       = 0755
+
+  content {
+    content = "${file("${path.module}/resources/eco-health.sh")}"
   }
 }

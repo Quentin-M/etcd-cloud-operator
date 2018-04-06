@@ -1,10 +1,8 @@
 eco:
-  check-interval: 15s
-  unseen-instance-ttl: ${unseen_instance_ttl}
-  auto-disaster-recovery: ${enable_auto_disaster_recovery}
+  unhealthy-member-ttl: ${unhealthy_member_ttl}
   etcd:
     advertise-address: ${advertise_address}
-    data-dir: /var/lib/eco/etcd
+    data-dir: /var/lib/eco
     client-transport-security:
       auto-tls: false
       cert-file: ${cert_file}

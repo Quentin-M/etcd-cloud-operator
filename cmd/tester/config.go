@@ -17,39 +17,17 @@ package main
 import (
 	"io/ioutil"
 	"os"
-	"time"
 
-	"github.com/quentin-m/etcd-cloud-operator/pkg/etcd"
-	"github.com/quentin-m/etcd-cloud-operator/pkg/operator"
-	"github.com/quentin-m/etcd-cloud-operator/pkg/providers/snapshot"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
+
+	"github.com/quentin-m/etcd-cloud-operator/pkg/tester"
 )
 
-// config represents a YAML configuration file that namespaces all ECO
-// configuration under the top-level "eco" key.
+// config represents a YAML configuration file that namespaces all ECO tester configuration under the
+// top-level "eco-tester" key.
 type config struct {
-	ECO operator.Config `yaml:"eco"`
-}
-
-// defaultConfig is a configuration that can be used as a fallback value.
-func defaultConfig() config {
-	return config{
-		ECO: operator.Config{
-			UnhealthyMemberTTL: 2 * time.Minute,
-			Etcd: etcd.EtcdConfiguration{
-				DataDir: "/var/lib/etcd",
-				PeerTransportSecurity: etcd.SecurityConfig{
-					AutoTLS: true,
-				},
-				BackendQuota: 2 * 1024 * 1024 * 1024,
-			},
-			Snapshot: snapshot.Config{
-				Interval: 30 * time.Minute,
-				TTL:      24 * time.Hour,
-			},
-		},
-	}
+	ECOTester tester.Config `yaml:"eco-tester"`
 }
 
 // loadConfig is a shortcut to open a file, read it, and generate a
@@ -57,10 +35,7 @@ func defaultConfig() config {
 //
 // It supports relative and absolute paths. Given "", it returns defaultConfig.
 func loadConfig(path string) (config, error) {
-	config := defaultConfig()
-	if path == "" {
-		return config, nil
-	}
+	config := config{}
 
 	f, err := os.Open(os.ExpandEnv(path))
 	if err != nil {

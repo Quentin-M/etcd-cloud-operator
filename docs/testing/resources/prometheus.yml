@@ -1,0 +1,7 @@
+global:
+  scrape_interval: 250ms
+  scrape_timeout: 250ms
+scrape_configs:
+- job_name: 'tester'
+  static_configs:
+    - targets: ['tester:8000']

@@ -1,0 +1,47 @@
+version: '3.1'
+
+volumes:
+    prometheus_data: {}
+    grafana_data: {}
+
+services:
+  tester:
+    image: golang:1.9
+    command: tail -f /dev/null
+    ports:
+      - 8000:8000
+    volumes:
+      - $SSH_AUTH_SOCK:/tmp/ssh-agent
+      - /home/ubuntu:/go/src/github.com/quentin-m/etcd-cloud-operator
+    environment:
+      SSH_AUTH_SOCK: '/tmp/ssh-agent'
+
+  prometheus:
+    image: prom/prometheus:v2.1.0
+    volumes:
+      - ./resources/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+    ports:
+      - 9090:9090
+    links:
+      - tester:tester
+    restart: always
+
+  grafana:
+    image: grafana/grafana
+    ports:
+      - 3000:3000
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./resources/grafana-datasource.yml:/etc/grafana/provisioning/datasources/grafana-datasource.yml
+      - ./resources/grafana-dashboard-cfg.json:/etc/grafana/provisioning/dashboards/grafana-dashboard-cfg.json
+      - ./resources/grafana-dashboard-0.json:/etc/grafana/provisioning/dashboards/grafana-dashboard-0.json
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: 'password'
+      GF_USERS_ALLOW_SIGN_UP: 'false'
+    restart: always

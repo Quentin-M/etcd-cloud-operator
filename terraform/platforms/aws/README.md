@@ -7,15 +7,17 @@ or internal).
 ## Run the operator standalone
 
 If you do not have an existing VPC and subnets across availability zones, you
-may create these using the [extra/aws_network] module. The VPC and subnets IDs
-will be displayed as a result.
+may create these using the [extra/aws_network](../../extra/aws_network) module.
+The VPC and subnets IDs will be displayed as a result.
 
 ```
-terraform apply terraform/extra/aws_network
+cd terraform/extra/aws_network
+terraform init .
+terraform apply .
 ```
 
-A Terraform configuration file (terraform.tfvars) should then be created. Note
-that all available configuration knobs are not exposed.
+A Terraform configuration file (terraform/platforms/aws/terraform.tfvars) should 
+then be created. Note that all available ECO configuration knobs are not exposed.
 
 ```
 # Name of the deployment.
@@ -23,7 +25,7 @@ name = "eco-example"
 # Number of etcd members (must be odd).
 size = "3"
 # Type of the EC2 instances to launch.
-instance_type = "t2.small"
+instance_type = "m5.large"
 # Size of the disk associated to the EC2 instances (in GB).
 instance_disk_size = "30"
 # List of SSH public keys that are allowed to login into nodes
@@ -47,7 +49,7 @@ load_balancer_security_group_ids = []
 metrics_security_group_ids = []
 
 # Container image of ECO to use.
-eco_image = "qmachu/etcd-cloud-operator:latest"
+eco_image = "qmachu/etcd-cloud-operator:v3.3.3"
 # Defines whether etcd should expect TLS clients connections.
 eco_enable_tls = "true"
 # Defines whether etcd should expect client certificates for client connections.
@@ -63,12 +65,30 @@ eco_backend_quota = "2147483648"
 Finally, let Terraform configure and create the infrastructure:
 
 ```
-terraform apply terraform/platforms/aws
+cd terraform/platforms/aws
+terraform init .
+terraform apply .
 ```
 
 After a few minutes, the etcd cluster will be available behind the endpoint
 displayed. If client certificates authentication was enabled, they will be
 displayed as well.
+
+Here is a way to query and verify the health of the cluster:
+```
+export ETCDCTL_API=3
+
+# Export the CA, if 'eco_enable_tls' was enabled.
+terraform output ca > ca.crt; export ETCDCTL_CACERT=$(pwd)/ca.crt
+export ETCDCTL_INSECURE_SKIP_TLS_VERIFY=true
+
+# Export the client certs, if 'eco_require_client_certs' was enabled.
+terraform output clients_cert > eco.crt; export ETCDCTL_CERT=$(pwd)/eco.crt
+terraform output clients_key > eco.key; export ETCDCTL_KEY=$(pwd)/eco.key
+
+etcdctl --endpoints=$(terraform output etcd_address) member list -w table
+etcdctl --endpoints=$(terraform output etcd_address) endpoint status -w table
+```
 
 ## Integrate the operator into your own project
 
@@ -78,14 +98,14 @@ relevant to your infrastructure:
 
 ```
 module "eco" {
-  source = "github.com/Quentin-M/etcd-cloud-operator//terraform/platforms/aws"
+  source = "github.com/quentin-m/etcd-cloud-operator//terraform/platforms/aws?ref=v3.3.3"
 
   name = "eco-example"
   size = "3"
 
-  instance_type         = "t2.small"
+  instance_type         = "m5.large"
   instance_disk_size    = "30"
-  instance_ssh_keys = ["ssh-rsa ..."]
+  instance_ssh_keys     = ["ssh-rsa ..."]
 
   associate_public_ip_address      = "true"
   subnets_ids                      = ["subnet-f438f793", "subnet-d4bea38c"]
@@ -96,7 +116,7 @@ module "eco" {
   load_balancer_security_group_ids = []
   metrics_security_group_ids       = []
   
-  eco_image                  = "qmachu/etcd-cloud-operator:latest"
+  eco_image                  = "qmachu/etcd-cloud-operator:v3.3.3"
   eco_enable_tls             = "true"
   eco_require_client_certs   = "false"
   eco_snapshot_interval      = "30m"

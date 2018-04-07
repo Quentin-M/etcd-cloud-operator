@@ -1,4 +1,6 @@
 data "aws_route53_zone" "main" {
+  count = "${var.route53_enabled == "true" ? 1 : 0}"
+
   zone_id = "${var.route53_zone_id}"
 }
 

@@ -42,4 +42,4 @@ COPY --from=build-env /etcd/etcdctl /usr/local/bin/etcdctl
 RUN apk add --no-cache ca-certificates
 
 ENTRYPOINT ["/operator"]
-CMD ["-config /etc/eco/eco.yaml"]
+CMD ["-config", "/etc/eco/eco.yaml"]

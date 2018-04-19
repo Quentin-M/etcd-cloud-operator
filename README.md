@@ -46,6 +46,9 @@ is desired but authentication is not.
 Running a managed etcd cluster using the operator is simply a matter of running
 the operator binary in a supported auto-scaling group (as of today, AWS only).
 
+- *AWS*: You will need to provide IAM credentials with the capability
+ DescribeAutoScalingInstances in the container's environment.
+
 A Terraform [module] is available to easily bring up production-grade etcd clusters
 managed by the the operator out, and integrate them into your infrastructure.
 

@@ -9,7 +9,7 @@ eco:
   # Configuration of the etcd instance.
   etcd:
     # The address that clients should use to connect to the etcd cluster (i.e.
-    # load balancer public address).
+    # load balancer public address - hostname only, no schema or port number).
     advertise-address:
     # The directory where the etcd data is stored.
     data-dir: /var/lib/etcd

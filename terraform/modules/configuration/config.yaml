@@ -2,7 +2,7 @@ eco:
   unhealthy-member-ttl: ${unhealthy_member_ttl}
   etcd:
     advertise-address: ${advertise_address}
-    data-dir: /var/lib/eco
+    data-dir: /var/lib/eco/etcd
     client-transport-security:
       auto-tls: false
       cert-file: ${cert_file}

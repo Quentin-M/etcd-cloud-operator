@@ -466,6 +466,8 @@ func (c *Server) runSnapshotter() {
 			return
 		}
 
-		c.Snapshot()
+		if err := c.Snapshot(); err != nil {
+			log.WithError(err).Error("failed to snapshot")
+		}
 	}
 }

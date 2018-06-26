@@ -442,7 +442,7 @@ func (c *Server) runMemberCleaner() {
 				log.Warnf("failed to remove unhealthy member %q, it might be starting", member.name)
 				continue
 			} else if err != nil {
-				log.WithError(err).Warn("failed to remove unhealthy member %q")
+				log.WithError(err).Warnf("failed to remove unhealthy member %q", member.name)
 				continue
 			}
 

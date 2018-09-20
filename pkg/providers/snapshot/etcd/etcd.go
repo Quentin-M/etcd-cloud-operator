@@ -23,7 +23,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/coreos/bbolt"
+	bolt "go.etcd.io/bbolt"
 
 	"github.com/quentin-m/etcd-cloud-operator/pkg/providers"
 	"github.com/quentin-m/etcd-cloud-operator/pkg/providers/snapshot"

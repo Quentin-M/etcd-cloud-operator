@@ -60,7 +60,7 @@ func (f *etcd) Info() (*snapshot.Metadata, error) {
 		return nil, snapshot.ErrNoSnapshot
 	}
 
-	db, err := bolt.Open(dbPath, 0400, &bolt.Options{ReadOnly: true})
+	db, err := bbolt.Open(dbPath, 0400, &bbolt.Options{ReadOnly: true})
 	if err != nil {
 		return nil, err
 	}
@@ -68,7 +68,7 @@ func (f *etcd) Info() (*snapshot.Metadata, error) {
 
 	var revision int64
 	var size int64
-	err = db.View(func(tx *bolt.Tx) error {
+	err = db.View(func(tx *bbolt.Tx) error {
 		size = tx.Size()
 		c := tx.Cursor()
 		for next, _ := c.First(); next != nil; next, _ = c.Next() {

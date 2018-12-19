@@ -1,11 +1,11 @@
-FROM golang:1.9-alpine AS build-env
+#Min version required
+#See: https://github.com/golang/go/issues/29278#issuecomment-447537558
+FROM golang:1.11.4-alpine AS build-env
 
 WORKDIR /go/src/github.com/quentin-m/etcd-cloud-operator
 
 # Install & Cache dependencies
-RUN apk add --no-cache git jq && \
-    go get github.com/Masterminds/glide && \
-    go get github.com/creack/yaml2json
+RUN apk add --no-cache git curl gcc musl-dev
 
 RUN apk add --update openssl && \
     wget https://github.com/coreos/etcd/releases/download/v3.3.3/etcd-v3.3.3-linux-amd64.tar.gz -O /tmp/etcd.tar.gz && \
@@ -13,33 +13,27 @@ RUN apk add --update openssl && \
     tar xzvf /tmp/etcd.tar.gz -C /etcd --strip-components=1 && \
     rm /tmp/etcd.tar.gz
 
-ADD glide.* ./
-RUN glide install --strip-vendor && yaml2json < glide.lock | \
-      jq -r -c '.imports[], .testImports[] | {name: .name, subpackages: (.subpackages + [""])}' | \
-      jq -r -c '.name as $name | .subpackages[] | [$name, .] | join("/")' | sed 's|/$||' | \
-      while read pkg; do \
-        echo "${pkg}..."; \
-        go install ./vendor/${pkg} 2> /dev/null; \
-      done
+# Force the go compiler to use modules
+ENV GO111MODULE=on
 
-# Fetch etcdctl
-COPY . .
-RUN go-wrapper install github.com/quentin-m/etcd-cloud-operator/cmd/operator
-RUN go-wrapper install github.com/quentin-m/etcd-cloud-operator/cmd/tester
+# We want to populate the module cache based on the go.{mod,sum} files.
+COPY go.mod .
+COPY go.sum .
+RUN go mod download
 
-# Install ECO
+FROM build-env as builder
 COPY . .
-RUN go-wrapper install github.com/quentin-m/etcd-cloud-operator/cmd/operator
-RUN go-wrapper install github.com/quentin-m/etcd-cloud-operator/cmd/tester
+RUN go install github.com/quentin-m/etcd-cloud-operator/cmd/operator
+RUN go install github.com/quentin-m/etcd-cloud-operator/cmd/tester
 
 # Copy ECO and etcdctl into an Alpine Linux container image.
 FROM alpine
 
-COPY --from=build-env /go/bin/operator /operator
-COPY --from=build-env /go/bin/tester /tester
-COPY --from=build-env /etcd/etcdctl /usr/local/bin/etcdctl
-
 RUN apk add --no-cache ca-certificates
+COPY --from=builder /go/bin/operator /operator
+COPY --from=builder /go/bin/tester /tester
+COPY --from=builder /etcd/etcdctl /usr/local/bin/etcdctl
+
 
 ENTRYPOINT ["/operator"]
 CMD ["-config", "/etc/eco/eco.yaml"]

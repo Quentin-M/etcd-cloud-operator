@@ -347,6 +347,7 @@ func (c *Server) startServer(ctx context.Context) error {
 		return fmt.Errorf("failed to start etcd: %s", err)
 	}
 	c.isRunning = true
+	log.Infof("embedded etcd server is now running")
 
 	// Wait until the server announces its ready, or until the start timeout is exceeded.
 	//

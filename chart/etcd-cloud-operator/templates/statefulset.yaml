@@ -1,0 +1,90 @@
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "etcd-cloud-operator.fullname" . }}
+  labels:
+    app.kubernetes.io/name: {{ include "etcd-cloud-operator.name" . }}
+    helm.sh/chart: {{ include "etcd-cloud-operator.chart" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+spec:
+  serviceName: {{ include "etcd-cloud-operator.fullname"  . }}
+  replicas: {{ default 3 .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "etcd-cloud-operator.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "etcd-cloud-operator.name" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+    spec:
+      volumes:
+      {{- if .Values.volumes }}
+        {{ toYaml .Values.volumes | toYaml | nindent  6 }}
+      {{- end }}
+      - name: config
+        configMap:
+          name: {{ include "etcd-cloud-operator.fullname" . }}
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          volumeMounts:
+          {{- if .Values.volumeMounts }}
+            {{ toYaml .Values.volumeMounts | toYaml | nindent  8 }}
+          {{- end }}
+          - name: config
+            mountPath: /etc/eco
+            readOnly: true
+          env:
+          - name: INITIAL_CLUSTER_SIZE
+            value: {{ default 3 .Values.replicaCount | quote }}
+          - name: STATEFULSET_SERVICE_NAME
+            value: {{ include "etcd-cloud-operator.fullname" . }}
+          - name: STATEFULSET_NAME
+            value: {{ include "etcd-cloud-operator.fullname" . }}
+          - name: POD_IP
+            valueFrom:
+              fieldRef:
+                fieldPath: status.podIP
+          - name: STATEFULSET_NAMESPACE
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.namespace
+          ports:
+            - name: client
+              containerPort: 2379
+              protocol: TCP
+            - name: peer
+              containerPort: 2380
+              protocol: TCP
+            - name: http
+              containerPort: 2378
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /status
+              port: http
+            periodSeconds: 30
+          readinessProbe:
+            tcpSocket:
+              port: client
+            initialDelaySeconds: 10
+            periodSeconds: 30
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+    {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}

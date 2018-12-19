@@ -1,0 +1,37 @@
+---
+replicaCount: 3
+image:
+  pullPolicy: IfNotPresent
+service:
+  type: ClusterIP
+resources: {}
+nodeSelector: {}
+tolerations: []
+affinity: {}
+volumes: {}
+volumeMounts: {}
+
+config:
+  checkInterval: 15s
+  unhealthyMemberTTL: 30s
+  autoDisasterRecovery: true
+  etcd:
+    dataDir: /var/lib/etcd
+    clientTransportSecurity:
+      autoTLS: false
+      certFile: ""
+      keyFile: ""
+      trustedCAFile: ""
+      clientCertAuth: false
+    peerTransportSecurity:
+      autoTLS: true
+      certFile: ""
+      keyFile: ""
+      trustedCaFile: ""
+      peerClientCertAuth: ""
+    backendQuota: "2147483648"
+  asg:
+    snapshot:
+      provider: file
+      interval: 30m
+      ttl: 24h

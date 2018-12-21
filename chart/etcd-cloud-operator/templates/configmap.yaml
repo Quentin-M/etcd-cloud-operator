@@ -46,8 +46,8 @@ data:
         provider: sts
       # Configuration of the snapshot provider.
       snapshot:
-        provider: {{ .Values.config.asg.snapshot.provider }}
+        provider: {{ .Values.config.snapshot.provider }}
         # The interval between each snapshot.
-        interval: {{ .Values.config.asg.snapshot.interval }}
+        interval: {{ .Values.config.snapshot.interval }}
         # The time after which a backup has to be deleted.
-        ttl: {{ .Values.config.asg.snapshot.ttl }}
+        ttl: {{ .Values.config.snapshot.ttl }}

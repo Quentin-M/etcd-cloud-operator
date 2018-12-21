@@ -21,21 +21,19 @@ spec:
         app.kubernetes.io/name: {{ include "etcd-cloud-operator.name" . }}
         app.kubernetes.io/instance: {{ .Release.Name }}
     spec:
-      volumes:
-      {{- if .Values.volumes }}
-        {{ toYaml .Values.volumes | toYaml | nindent  6 }}
-      {{- end }}
-      - name: config
-        configMap:
-          name: {{ include "etcd-cloud-operator.fullname" . }}
       containers:
         - name: {{ .Chart.Name }}
           image: "{{ .Values.image.repository }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           volumeMounts:
-          {{- if .Values.volumeMounts }}
-            {{ toYaml .Values.volumeMounts | toYaml | nindent  8 }}
+          {{- if .Values.persistence.enabled }}
+          - name: data
+            mountPath: {{ .Values.config.etcd.dataDir }}
           {{- end }}
+          {{- if eq .Values.config.snapshot.provider "file" }}
+          - name: snapshot
+            mountPath: /var/lib/snapshots
+          {{- end}}
           - name: config
             mountPath: /etc/eco
             readOnly: true
@@ -58,24 +56,63 @@ spec:
             - name: client
               containerPort: 2379
               protocol: TCP
-            - name: peer
-              containerPort: 2380
-              protocol: TCP
             - name: http
               containerPort: 2378
               protocol: TCP
+            - name: peer
+              containerPort: 2380
+              protocol: TCP
+            - name: metrics
+              containerPort: 2381
+              protocol: TCP
           livenessProbe:
+            tcpSocket:
+              port: client
+            initialDelaySeconds: 60
+            periodSeconds: 60
+          readinessProbe:
             httpGet:
               path: /status
               port: http
-            periodSeconds: 30
-          readinessProbe:
-            tcpSocket:
-              port: client
             initialDelaySeconds: 10
             periodSeconds: 30
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
+      volumes:
+      - name: config
+        configMap:
+          name: {{ include "etcd-cloud-operator.fullname" . }}
+{{- if eq .Values.config.snapshot.provider "file" }}
+      - name: snapshot
+        emptyDir: {}
+{{- end }}
+{{- if and .Values.persistence.enabled .Values.persistence.existingClaim }}
+      - name: data
+        persistentVolumeClaim:
+          claimName: {{ .Values.persistence.existingClaim }}
+{{- else if not .Values.persistence.enabled }}
+      - name: data
+        emptyDir: {}
+{{- else if and .Values.persistence.enabled (not .Values.persistence.existingClaim) }}
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+    {{- with .Values.persistence.annotations }}
+      annotations:
+      {{- range $key, $value := . }}
+        {{ $key }}: {{ $value }}
+      {{- end }}
+    {{- end }}
+    spec:
+      storageClassName: "{{ .Values.persistence.storageClass }}"
+      accessModes:
+      {{- range .Values.persistence.accessModes }}
+        - {{ . | quote }}
+      {{- end }}
+      resources:
+        requests:
+          storage: {{ .Values.persistence.size | quote }}
+{{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

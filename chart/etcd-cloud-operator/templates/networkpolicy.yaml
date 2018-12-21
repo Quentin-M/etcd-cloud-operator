@@ -1,0 +1,33 @@
+{{- if .Values.networkPolicy.enabled }}
+kind: NetworkPolicy
+apiVersion: extensions/v1beta1
+metadata:
+  name: {{ include "etcd-cloud-operator.fullname" . }}
+  labels:
+    app.kubernetes.io/name: {{ include "etcd-cloud-operator.name" . }}
+    helm.sh/chart: {{ include "etcd-cloud-operator.chart" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "etcd-cloud-operator.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+      app: {{ include "etcd-cloud-operator.name" . }}
+      release: {{ .Release.Name | quote }}
+  ingress:
+    # Allow inbound connections
+    - ports:
+      - port: 2379
+    {{- if not .Values.networkPolicy.allowExternal }}
+      from:
+      - podSelector:
+          matchLabels:
+            {{ include "etcd-cloud-operator.fullname" . }}-client: "true"
+    {{- end }}
+    # Allow prometheus scrapes, peer discovery and healthchecks
+    - ports:
+      - port: 2378
+      - port: 2380
+      - port: 2381
+{{- end }}

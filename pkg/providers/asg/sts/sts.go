@@ -20,17 +20,20 @@ import (
 
 	"github.com/quentin-m/etcd-cloud-operator/pkg/providers/asg"
 	log "github.com/sirupsen/logrus"
+	v1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 )
+
+var i instance
 
 func init() {
 	asg.Register("sts", &sts{})
 }
 
 type sts struct {
-	asgName, instanceID string
+	name, namespace string
 }
 
 type instance struct {
@@ -45,8 +48,24 @@ func (i *instance) Address() string {
 	return i.address
 }
 
-func (a *sts) Configure(providerConfig asg.Config) error {
-	return nil
+func (a *sts) Configure(providerConfig asg.Config) (err error) {
+	a.name, err = envOrErr("STATEFULSET_NAME")
+	if err != nil {
+		return
+	}
+	a.namespace, err = envOrErr("STATEFULSET_NAMESPACE")
+	if err != nil {
+		return
+	}
+
+	i.name, err = envOrErr("HOSTNAME")
+	if err != nil {
+		return
+	}
+
+	i.address, err = envOrErr("POD_IP")
+
+	return
 }
 
 func (a *sts) AutoScalingGroupStatus() (instances []asg.Instance, self asg.Instance, size int, err error) {
@@ -56,42 +75,58 @@ func (a *sts) AutoScalingGroupStatus() (instances []asg.Instance, self asg.Insta
 	}
 
 	cs, err := kubernetes.NewForConfig(config)
-
 	if err != nil {
 		return
 	}
 
-	log.Infof("Connected to Kubernetes API")
+	log.Debugf("Running in pod: %s owned by statefulset: %s in namespace: %s with ip: %s",
+		i.name, a.name, a.namespace, i.address)
 
-	namespace := os.Getenv("STATEFULSET_NAMESPACE")
-	name := os.Getenv("STATEFULSET_NAME")
-	podAddress := os.Getenv("POD_IP")
-	podName := os.Getenv("HOSTNAME")
+	self = &i
 
-	log.Infof("Running in pod: %s owned by statefulset: %s in namespace: %s with ip: %s",
-		podName, name, namespace, podAddress)
-
-	s, err := cs.AppsV1().StatefulSets(namespace).Get(name, metav1.GetOptions{})
-
+	s, err := cs.AppsV1().StatefulSets(a.namespace).Get(a.name, metav1.GetOptions{})
 	if err != nil {
 		log.Errorf("There was an error retrieving statefulset: %s", err)
-		return instances, self, size, err
+		return
 	}
 
-	size = int(s.Status.Replicas)
-	self = &instance{name: podName, address: podAddress}
+	size = int(*s.Spec.Replicas)
+	log.Debugf("Determined desired cluster size: %v", size)
 
-	for i := 0; i < size; i++ {
-		p := fmt.Sprintf("%s-%v", name, i)
-		instance := instanceFromPod(cs, p, namespace)
-		instances = append(instances, instance)
+	instances, err = getInstancesFromStatefulSet(s, cs, a.namespace, a.name)
+	if err != nil {
+		log.Errorf("There was a problem getting instances from the statefulset: %s", err)
 	}
-	return instances, self, size, nil
+
+	log.Debugf("Instances: %+v, Self: %+v, Size: %v", instances, self, size)
+
+	return
 }
 
-func instanceFromPod(cs *kubernetes.Clientset, name string, namespace string) asg.Instance {
-	pod, _ := cs.CoreV1().Pods(namespace).Get(name, metav1.GetOptions{})
-	address := pod.Status.PodIP
-	log.Infof("Identifying peer: %s at address: %s", name, address)
-	return &instance{name: name, address: address}
+func getInstancesFromStatefulSet(s *v1.StatefulSet, cs *kubernetes.Clientset, namespace, name string) (instances []asg.Instance, err error) {
+	selector, err := metav1.LabelSelectorAsSelector(s.Spec.Selector)
+	if err != nil {
+		return
+	}
+
+	replicas, err := cs.CoreV1().Pods(namespace).List(metav1.ListOptions{LabelSelector: selector.String()})
+	if err != nil {
+		return
+	}
+
+	for _, r := range replicas.Items {
+		log.Debugf("Identified peer %s at IP: %s", r.Name, r.Status.PodIP)
+		instances = append(instances, &instance{name: r.Name, address: r.Status.PodIP})
+	}
+
+	return
+}
+
+func envOrErr(key string) (value string, err error) {
+	value = os.Getenv(key)
+	if value == "" {
+		err = fmt.Errorf("Required environment variable: %s was not set", key)
+	}
+
+	return
 }

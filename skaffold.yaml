@@ -11,7 +11,7 @@ deploy:
     releases:
     - name: eco
       chartPath: chart/etcd-cloud-operator
-      wait: true
+      wait: false
       recreatePods: true
       namespace: eco
       values:

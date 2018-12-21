@@ -12,14 +12,6 @@ spec:
   clusterIP: None
   type: ClusterIP
   ports:
-    - port: 2379
-      targetPort: client
-      protocol: TCP
-      name: client
-    - port: 2378
-      targetPort: http
-      protocol: TCP
-      name: http
     - port: 2380
       targetPort: peer
       protocol: TCP
@@ -37,6 +29,9 @@ metadata:
     helm.sh/chart: {{ include "etcd-cloud-operator.chart" . }}
     app.kubernetes.io/instance: {{ .Release.Name }}
     app.kubernetes.io/managed-by: {{ .Release.Service }}
+  annotations:
+      prometheus.io/scrape: "true"
+      prometheus.io/port: "2381"
 spec:
   clusterIP: None
   type: {{ .Values.service.type }}
@@ -49,6 +44,10 @@ spec:
       targetPort: http
       protocol: TCP
       name: http
+    - port: 2381
+      protocol: TCP
+      targetPort: metrics
+      name: metrics
   selector:
     app.kubernetes.io/name: {{ include "etcd-cloud-operator.name" . }}
     app.kubernetes.io/instance: {{ .Release.Name }}

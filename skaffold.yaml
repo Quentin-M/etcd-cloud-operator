@@ -1,0 +1,18 @@
+---
+apiVersion: skaffold/v1beta1
+kind: Config
+build:
+  tagPolicy:
+    sha256: {}
+  artifacts:
+  - image: etcd-cloud-operator
+deploy:
+  helm:
+    releases:
+    - name: eco
+      chartPath: chart/etcd-cloud-operator
+      wait: false
+      recreatePods: true
+      namespace: eco
+      values:
+        image.repository: etcd-cloud-operator

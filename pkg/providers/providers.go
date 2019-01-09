@@ -18,7 +18,7 @@ import (
 	"reflect"
 	"unsafe"
 
-	"gopkg.in/yaml.v2"
+	yaml "gopkg.in/yaml.v2"
 )
 
 func ParseParams(params map[string]interface{}, cfg interface{}) error {

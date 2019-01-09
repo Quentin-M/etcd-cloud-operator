@@ -1,0 +1,62 @@
+---
+replicaCount: 3
+image:
+  pullPolicy: IfNotPresent
+service:
+  type: ClusterIP
+
+# Used by the Pod disruption budget
+maxUnavailable: 30%
+
+persistence:
+  enabled: false
+  ## A manually managed Persistent Volume and Claim
+  ## If defined, persistence must be enabled and
+  ## PVC must be created manually before volume will be bound
+  #  existingClaim:
+  ## Name of the storage class to use when requesting the volume
+  storageClass: "hostpath"
+  accessModes:
+   - ReadWriteOnce
+  size: 1Gi
+  annotations: {}
+
+networkPolicy:
+  ## Enable creation of NetworkPolicy resources.
+  enabled: false
+  ## The Policy model to apply. When set to false, only pods with the correct
+  ## client label will have network access to the port PostgreSQL is listening
+  ## on. When true, ETCD will accept connections from any source
+  ## (with the correct destination port).
+  ##
+  allowExternal: true
+
+# Eco configuration, see config.example.yaml for option details
+config:
+  checkInterval: 15s
+  unhealthyMemberTTL: 30s
+  autoDisasterRecovery: true
+  etcd:
+    dataDir: /var/lib/etcd
+    clientTransportSecurity:
+      autoTLS: false
+      certFile: ""
+      keyFile: ""
+      trustedCAFile: ""
+      clientCertAuth: false
+    peerTransportSecurity:
+      autoTLS: true
+      certFile: ""
+      keyFile: ""
+      trustedCaFile: ""
+      peerClientCertAuth: ""
+    backendQuota: "2147483648"
+  snapshot:
+    provider: file
+    interval: 30m
+    ttl: 24h
+
+resources: {}
+nodeSelector: {}
+tolerations: []
+affinity: {}

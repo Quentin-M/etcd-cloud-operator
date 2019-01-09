@@ -38,8 +38,6 @@ spec:
             mountPath: /etc/eco
             readOnly: true
           env:
-          - name: INITIAL_CLUSTER_SIZE
-            value: {{ default 3 .Values.replicaCount | quote }}
           - name: STATEFULSET_SERVICE_NAME
             value: {{ include "etcd-cloud-operator.fullname" . }}
           - name: STATEFULSET_NAME

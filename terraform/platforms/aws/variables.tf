@@ -43,7 +43,7 @@ variable "vpc_id" {
 
 variable "route53_enabled" {
   description = "Defines whether a Route53 record should be created for client connections"
-  default = "false"
+  default     = "false"
 }
 
 variable "route53_zone_id" {
@@ -64,4 +64,9 @@ variable "metrics_security_group_ids" {
   description = "List of the security group IDs authorized to reach etcd/node-exporter metrics using the internal instances' IPs (if empty, metrics are not exposed)"
   type        = "list"
   default     = []
+}
+
+variable "ignition_extra_config" {
+  description = "Extra ignition configuration that will get appended to the default ECO config"
+  default     = {}
 }

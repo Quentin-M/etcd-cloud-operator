@@ -19,8 +19,8 @@ data "template_file" "configuration" {
     asg_provider      = "${var.eco_asg_provider}"
     snapshot_provider = "${var.eco_snapshot_provider}"
 
-    unhealthy_member_ttl          = "${var.eco_unhealthy_member_ttl}"
-    advertise_address             = "${var.eco_advertise_address}"
+    unhealthy_member_ttl = "${var.eco_unhealthy_member_ttl}"
+    advertise_address    = "${var.eco_advertise_address}"
 
     cert_file           = "${var.eco_cert_file}"
     key_file            = "${var.eco_key_file}"

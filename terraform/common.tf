@@ -30,12 +30,12 @@
 
 variable "instance_ssh_keys" {
   description = "List of SSH public keys that are allowed to login into nodes"
-  type = "list"
+  type        = "list"
 }
 
 variable "eco_image" {
   description = "Container image of ECO to use"
-  default     = "qmachu/etcd-cloud-operator:latest"
+  default     = "qmachu/etcd-cloud-operator:v3.3.3"
 }
 
 variable "eco_enable_tls" {
@@ -55,18 +55,20 @@ variable "eco_snapshot_ttl" {
   description = "Defines the lifespan of each etcd snapshot (e.g. 24h)"
 }
 
+// 2GB
 variable "eco_backend_quota" {
   description = "Defines the maximum amount of data that etcd can store, in bytes, before going into maintenance mode"
-  default = "2147483648"
+  default     = "2147483648"
 }
 
 variable "ca" {
   description = "Optional CA keypair from which all certificates should be generated ('cert', 'key', 'alg')"
   type        = "map"
-  default     = {
-    "cert" = "",
-    "key"  = "",
-    "alg"  = "",
+
+  default = {
+    "cert" = ""
+    "key"  = ""
+    "alg"  = ""
   }
 }
 
@@ -96,8 +98,8 @@ module "configuration" {
   eco_key_file            = "${var.eco_enable_tls == true ? module.ignition.eco_key_file : ""}"
   eco_require_client_cert = "${var.eco_require_client_certs}"
 
-  eco_snapshot_interval             = "${var.eco_snapshot_interval}"
-  eco_snapshot_ttl                  = "${var.eco_snapshot_ttl}"
+  eco_snapshot_interval = "${var.eco_snapshot_interval}"
+  eco_snapshot_ttl      = "${var.eco_snapshot_ttl}"
 
   eco_backend_quota = "${var.eco_backend_quota}"
 }
@@ -113,6 +115,8 @@ module "ignition" {
   eco_cert = "${module.tls.clients_server_cert}"
   eco_key  = "${module.tls.clients_server_key}"
   eco_ca   = "${module.tls.ca}"
+
+  ignition_extra_config = "${var.ignition_extra_config}"
 }
 
 // Output.

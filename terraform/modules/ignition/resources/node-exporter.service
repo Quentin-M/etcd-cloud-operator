@@ -6,9 +6,9 @@ Requires=docker.service
 [Service]
 TimeoutStartSec=0
 Restart=always
-ExecStartPre=-/usr/bin/docker stop eco
-ExecStartPre=-/usr/bin/docker rm eco
-ExecStart=/usr/bin/docker run --rm --name node-exporter --net=host --pid=host quay.io/prometheus/node-exporter
+ExecStartPre=-/usr/bin/docker stop node-exporter
+ExecStartPre=-/usr/bin/docker rm node-exporter
+ExecStart=/usr/bin/docker run --rm --name node-exporter --net=host --pid=host quay.io/prometheus/node-exporter:v0.17.0
 
 [Install]
 WantedBy=multi-user.target

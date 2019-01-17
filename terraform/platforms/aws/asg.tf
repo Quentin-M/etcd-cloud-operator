@@ -131,6 +131,11 @@ resource "aws_security_group" "instances" {
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
+
+  tags {
+    Name       = "instances.${var.name}"
+    managed_by = "etcd-cloud-operator"
+  }
 }
 
 resource "aws_iam_instance_profile" "instances" {

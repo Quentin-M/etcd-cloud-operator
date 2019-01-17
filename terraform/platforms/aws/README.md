@@ -16,7 +16,7 @@ terraform init .
 terraform apply .
 ```
 
-A Terraform configuration file (terraform/platforms/aws/terraform.tfvars) should 
+A Terraform configuration file (terraform/platforms/aws/terraform.tfvars) should
 then be created. Note that all available ECO configuration knobs are not exposed.
 
 ```
@@ -75,6 +75,7 @@ displayed. If client certificates authentication was enabled, they will be
 displayed as well.
 
 Here is a way to query and verify the health of the cluster:
+
 ```
 export ETCDCTL_API=3
 
@@ -115,17 +116,50 @@ module "eco" {
   load_balancer_internal           = "false"
   load_balancer_security_group_ids = []
   metrics_security_group_ids       = []
-  
+
   eco_image                  = "qmachu/etcd-cloud-operator:v3.3.3"
   eco_enable_tls             = "true"
   eco_require_client_certs   = "false"
   eco_snapshot_interval      = "30m"
   eco_snapshot_ttl           = "24h"
-  
+
   eco_backend_quota = "${2 * 1024 * 1024 * 1024}"
+
+  ignition_extra_config = {
+    source = "${local.ignition_extra_config}"
+  }
+}
+
+// If you want to add extra ignition config, use like this
+data "ignition_config" "extra" {
+  users = [
+    "${data.ignition_user.batman.id}",
+  ]
+
+  groups = [
+    "${data.ignition_group.superheroes.id}",
+  ]
+}
+
+data "ignition_group" "superheroes" {
+  name = "superheroes"
+}
+
+data "ignition_user" "batman" {
+    name = "batman"
+    home_dir = "/home/batman/"
+    shell = "/bin/bash"
+}
+
+// Alternatively, instead of using data-uri, you can host this on a web URl and pass that instead.
+// See https://www.terraform.io/docs/providers/ignition/d/config.html#append
+// for more details
+locals {
+  ignition_extra_config = "data:text/plain;charset=utf-8;base64,${base64encode(data.ignition_config.extra.rendered)}"
 }
 ```
 
 The following outputs will be available for use:
+
 - `etcd_address`
 - `ca`, `clients_cert`, `clients_key` (client certificate authentication)

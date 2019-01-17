@@ -16,7 +16,7 @@ terraform init .
 terraform apply .
 ```
 
-A Terraform configuration file (terraform/platforms/aws/terraform.tfvars) should 
+A Terraform configuration file (terraform/platforms/aws/terraform.tfvars) should
 then be created. Note that all available ECO configuration knobs are not exposed.
 
 ```
@@ -75,6 +75,7 @@ displayed. If client certificates authentication was enabled, they will be
 displayed as well.
 
 Here is a way to query and verify the health of the cluster:
+
 ```
 export ETCDCTL_API=3
 
@@ -115,17 +116,19 @@ module "eco" {
   load_balancer_internal           = "false"
   load_balancer_security_group_ids = []
   metrics_security_group_ids       = []
-  
+
   eco_image                  = "qmachu/etcd-cloud-operator:v3.3.3"
   eco_enable_tls             = "true"
   eco_require_client_certs   = "false"
   eco_snapshot_interval      = "30m"
   eco_snapshot_ttl           = "24h"
-  
+
   eco_backend_quota = "${2 * 1024 * 1024 * 1024}"
 }
 ```
 
 The following outputs will be available for use:
+
 - `etcd_address`
 - `ca`, `clients_cert`, `clients_key` (client certificate authentication)
+- `instance_security_group` (Security Group ID for the instance SG)

@@ -124,6 +124,38 @@ module "eco" {
   eco_snapshot_ttl           = "24h"
 
   eco_backend_quota = "${2 * 1024 * 1024 * 1024}"
+
+  ignition_extra_config = {
+    source = "${local.ignition_extra_config}"
+  }
+}
+
+// If you want to add extra ignition config, use like this
+data "ignition_config" "extra" {
+  users = [
+    "${data.ignition_user.batman.id}",
+  ]
+
+  groups = [
+    "${data.ignition_group.superheroes.id}",
+  ]
+}
+
+data "ignition_group" "superheroes" {
+  name = "superheroes"
+}
+
+data "ignition_user" "batman" {
+    name = "batman"
+    home_dir = "/home/batman/"
+    shell = "/bin/bash"
+}
+
+// Alternatively, instead of using data-uri, you can host this on a web URl and pass that instead.
+// See https://www.terraform.io/docs/providers/ignition/d/config.html#append
+// for more details
+locals {
+  ignition_extra_config = "data:text/plain;charset=utf-8;base64,${base64encode(data.ignition_config.extra.rendered)}"
 }
 ```
 

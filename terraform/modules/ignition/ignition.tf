@@ -19,7 +19,7 @@ data "ignition_config" "main" {
     "${data.ignition_file.eco-crt.id}",
     "${data.ignition_file.eco-key.id}",
     "${data.ignition_file.eco-health.id}",
-    "${data.ignition_file.e.id}"
+    "${data.ignition_file.e.id}",
   ]
 
   systemd = [
@@ -32,10 +32,15 @@ data "ignition_config" "main" {
   ]
 
   users = ["${data.ignition_user.core.id}"]
+
+  append {
+    source       = "${lookup(var.ignition_extra_config, "source", local.blank_ignition_config)}"
+    verification = "${lookup(var.ignition_extra_config, "verification", "")}"
+  }
 }
 
 data "ignition_user" "core" {
-  name = "core"
+  name                = "core"
   ssh_authorized_keys = "${var.instance_ssh_keys}"
 }
 
@@ -142,3 +147,5 @@ data "ignition_file" "eco-health" {
     content = "${file("${path.module}/resources/eco-health.sh")}"
   }
 }
+
+data "ignition_config" "blank" {}

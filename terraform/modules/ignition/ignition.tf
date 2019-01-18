@@ -34,7 +34,7 @@ data "ignition_config" "main" {
   users = ["${data.ignition_user.core.id}"]
 
   append {
-    source       = "${lookup(var.ignition_extra_config, "source")}"
+    source       = "${lookup(var.ignition_extra_config, "source", local.blank_ignition_config)}"
     verification = "${lookup(var.ignition_extra_config, "verification", "")}"
   }
 }
@@ -147,3 +147,5 @@ data "ignition_file" "eco-health" {
     content = "${file("${path.module}/resources/eco-health.sh")}"
   }
 }
+
+data "ignition_config" "blank" {}

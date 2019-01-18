@@ -12,6 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+locals {
+  blank_ignition_config = "data:text/plain;charset=utf-8;base64,${base64encode(data.ignition_config.blank.rendered)}"
+}
+
 variable "instance_ssh_keys" {
   description = "List of SSH public keys that are allowed to login into nodes"
   type        = "list"

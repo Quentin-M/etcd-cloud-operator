@@ -27,7 +27,7 @@ resource "tls_self_signed_cert" "ca" {
   key_algorithm         = "${tls_private_key.ca.algorithm}"
   private_key_pem       = "${tls_private_key.ca.private_key_pem}"
   is_ca_certificate     = true
-  validity_period_hours = 8760
+  validity_period_hours = 43800
 
   subject {
     common_name  = "etcd"
@@ -77,7 +77,7 @@ resource "tls_locally_signed_cert" "clients-server" {
   ca_key_algorithm      = "${local.ca["alg"]}"
   ca_private_key_pem    = "${local.ca["key"]}"
   ca_cert_pem           = "${local.ca["cert"]}"
-  validity_period_hours = 8760
+  validity_period_hours = 43800
 
   allowed_uses = [
     "key_encipherment",
@@ -114,7 +114,7 @@ resource "tls_locally_signed_cert" "clients" {
   ca_key_algorithm      = "${local.ca["alg"]}"
   ca_private_key_pem    = "${local.ca["key"]}"
   ca_cert_pem           = "${local.ca["cert"]}"
-  validity_period_hours = 8760
+  validity_period_hours = 43800
 
   allowed_uses = [
     "key_encipherment",

@@ -42,7 +42,8 @@ resource "aws_autoscaling_group" "main" {
   max_size         = "${var.size}"
   min_size         = "${var.size}"
   desired_capacity = "${var.size}"
-
+  default_cooldown = "0"
+  
   load_balancers            = ["${aws_elb.clients.name}"]
   health_check_grace_period = 120
   health_check_type         = "EC2"

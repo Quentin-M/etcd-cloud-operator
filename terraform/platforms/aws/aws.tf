@@ -12,16 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-resource "aws_s3_bucket" "backups" {
-  bucket = "${var.name}"
-  acl    = "private"
-
-  tags = "${merge(map(
-    "Name", "${var.name}",
-    "owner", "etcd-cloud-operator"
-  ), var.extra_tags)}"
-}
-
 resource "aws_elb" "clients" {
   name = "${replace(var.name, "/[^a-zA-Z0-9-]/", "-")}"
 
@@ -51,6 +41,11 @@ resource "aws_elb" "clients" {
     target              = "TCP:2379"
     interval            = 5
   }
+
+  tags = "${merge(map(
+    "Name", "${var.name}",
+    "managed_by", "etcd-cloud-operator"
+  ), var.extra_tags)}"
 }
 
 resource "aws_security_group" "elb" {
@@ -75,6 +70,11 @@ resource "aws_security_group" "elb" {
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
+
+  tags = "${merge(map(
+    "Name", "${var.name}",
+    "managed_by", "etcd-cloud-operator"
+  ), var.extra_tags)}"
 }
 
 locals {

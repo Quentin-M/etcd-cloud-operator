@@ -36,6 +36,13 @@ data "aws_ami" "coreos" {
   }
 }
 
+data "ignition_config" "s3" {
+  replace {
+    source       = "${format("s3://%s/%s", "${aws_s3_bucket.config.id}", aws_s3_bucket_object.ignition_config.key)}"
+    verification = "sha512-${sha512(module.ignition.ignition)}"
+  }
+}
+
 resource "aws_autoscaling_group" "main" {
   name = "${var.name}"
 
@@ -132,8 +139,8 @@ resource "aws_security_group" "instances" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  tags {
-    Name       = "instances.${var.name}"
-    managed_by = "etcd-cloud-operator"
-  }
+  tags = "${merge(map(
+    "Name", "${var.name}",
+    "managed_by", "etcd-cloud-operator"
+  ), var.extra_tags)}"
 }

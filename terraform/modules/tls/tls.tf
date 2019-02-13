@@ -39,6 +39,10 @@ resource "tls_self_signed_cert" "ca" {
     "digital_signature",
     "cert_signing",
   ]
+
+  lifecycle {
+    ignore_changes = ["validity_period_hours"]
+  }
 }
 
 locals {
@@ -84,6 +88,10 @@ resource "tls_locally_signed_cert" "clients-server" {
     "client_auth",
     "server_auth",
   ]
+
+  lifecycle {
+    ignore_changes = ["validity_period_hours"]
+  }
 }
 
 # Certificates for the etcd clients.
@@ -120,4 +128,8 @@ resource "tls_locally_signed_cert" "clients" {
     "key_encipherment",
     "client_auth",
   ]
+
+  lifecycle {
+    ignore_changes = ["validity_period_hours"]
+  }
 }

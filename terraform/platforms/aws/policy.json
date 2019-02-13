@@ -4,10 +4,12 @@
     {
       "Action": "*",
       "Effect": "Allow",
-      "Resource": [
-        "arn:aws:s3:::${bucket}",
-        "arn:aws:s3:::${bucket}/*"
-      ]
+      "Resource": ["arn:aws:s3:::${bucket}", "arn:aws:s3:::${bucket}/*"]
+    },
+    {
+      "Action": "s3:GetObject",
+      "Effect": "Allow",
+      "Resource": ["${config_arn}"]
     },
     {
       "Action": [
@@ -18,11 +20,14 @@
       "Resource": "*"
     },
     {
-      "Action": [
-        "ec2:DescribeInstances"
-      ],
+      "Action": ["ec2:DescribeInstances"],
       "Effect": "Allow",
       "Resource": "*"
+    },
+    {
+      "Action": ["kms:Decrypt"],
+      "Effect": "Allow",
+      "Resource": ["${kms_arn}"]
     }
   ]
 }

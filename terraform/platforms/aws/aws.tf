@@ -15,6 +15,11 @@
 resource "aws_s3_bucket" "backups" {
   bucket = "${var.name}"
   acl    = "private"
+
+  tags = "${merge(map(
+    "Name", "${var.name}",
+    "owner", "etcd-cloud-operator"
+  ), var.extra_tags)}"
 }
 
 resource "aws_elb" "clients" {

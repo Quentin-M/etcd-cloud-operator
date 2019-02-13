@@ -67,7 +67,7 @@ resource "aws_launch_configuration" "main" {
 
   security_groups      = ["${aws_security_group.instances.id}"]
   iam_instance_profile = "${aws_iam_instance_profile.instances.arn}"
-  user_data            = "${module.ignition.ignition}"
+  user_data            = "${data.ignition_config.s3.rendered}"
   ebs_optimized        = "true"
 
   associate_public_ip_address = "${var.associate_public_ips}"
@@ -136,44 +136,4 @@ resource "aws_security_group" "instances" {
     Name       = "instances.${var.name}"
     managed_by = "etcd-cloud-operator"
   }
-}
-
-resource "aws_iam_instance_profile" "instances" {
-  name = "${var.name}"
-  role = "${aws_iam_role.instances.name}"
-}
-
-resource "aws_iam_role" "instances" {
-  name = "${var.name}"
-  path = "/"
-
-  assume_role_policy = <<EOF
-{
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Action": "sts:AssumeRole",
-            "Principal": {
-                "Service": "ec2.amazonaws.com"
-            },
-            "Effect": "Allow",
-            "Sid": ""
-        }
-    ]
-}
-EOF
-}
-
-data "template_file" "policy" {
-  template = "${file("${path.module}/policy.json")}"
-
-  vars {
-    bucket = "${aws_s3_bucket.backups.bucket}"
-  }
-}
-
-resource "aws_iam_role_policy" "instances" {
-  name   = "${var.name}"
-  role   = "${aws_iam_role.instances.id}"
-  policy = "${data.template_file.policy.rendered}"
 }

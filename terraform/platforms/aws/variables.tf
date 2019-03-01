@@ -69,4 +69,11 @@ variable "metrics_security_group_ids" {
 variable "ignition_extra_config" {
   description = "Extra ignition configuration that will get appended to the default ECO config"
   default     = {}
+  type        = "map"
+}
+
+variable "extra_tags" {
+  type        = "map"
+  description = "Extra tags to associated with any AWS resources."
+  default     = {}
 }

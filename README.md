@@ -15,50 +15,52 @@ failures.
 
 ## Features
 
-- *Resize*: By abstracting cluster management, resizing the cluster becomes
- straightforward as the underlying auto-scaling group can simply be scaled as
- desired.
+-   _Resize_: By abstracting cluster management, resizing the cluster becomes
+    straightforward as the underlying auto-scaling group can simply be scaled as
+    desired.
 
-- *Snapshots*: Periodically, snapshots of the entire key-value space are
- captured, from each of the etcd members and uploaded to an encrypted external
- storage, allowing the etcd (or human) operator to restore the store at a later
- time, in any etcd cluster or instance.
+-   _Snapshots_: Periodically, snapshots of the entire key-value space are
+    captured, from each of the etcd members and uploaded to an encrypted external
+    storage, allowing the etcd (or human) operator to restore the store at a later
+    time, in any etcd cluster or instance.
 
-- *Failure recovery*: Upon failure of a minority of the etcd members, the
- managed members automatically restarts and rejoins the cluster without
- breaking quorum or causing visible downtime - First by simply trying to rejoin
- with their existing data set, otherwise trying to join as a new member with a
- clean state, or by replacing the entire instance if necessary.
+-   _Failure recovery_: Upon failure of a minority of the etcd members, the
+    managed members automatically restarts and rejoins the cluster without
+    breaking quorum or causing visible downtime - First by simply trying to rejoin
+    with their existing data set, otherwise trying to join as a new member with a
+    clean state, or by replacing the entire instance if necessary.
 
-- *Disaster recovery*: In the event of a quorum loss, consequence of the
- simultaneous failure of a majority of the members, the operator coordinates
- to snapshot any live members and cleanly stop then, before seeding a new cluster
- from the latest data revision available once the expected amount of instances
- are ready to start again.
+-   _Disaster recovery_: In the event of a quorum loss, consequence of the
+    simultaneous failure of a majority of the members, the operator coordinates
+    to snapshot any live members and cleanly stop then, before seeding a new cluster
+    from the latest data revision available once the expected amount of instances
+    are ready to start again.
 
 The operator and etcd cluster can be easily configured using a [YAML file]. The
 configuration notably includes clients/peers TLS encryption/authentication, with
 the ability to automatically generate self-signed certificates if encryption
 is desired but authentication is not.
 
+A changelog is maintained at [CHANGELOG.md](CHANGELOG.md).
+
 ## How to try it?
 
 Running a managed etcd cluster using the operator is simply a matter of running
 the operator binary in a supported auto-scaling group (as of today, AWS and Kubernetes only).
 
-- *AWS*: You will need to provide IAM credentials with the following capabilities
-  in the container's environment, scoped to the appropriate instances:
-  "ec2:DescribeInstances"
-  "autoscaling:DescribeAutoScalingGroups"
-  "autoscaling:DescribeAutoScalingInstances"
+-   _AWS_: You will need to provide IAM credentials with the following capabilities
+    in the container's environment, scoped to the appropriate instances:
+    "ec2:DescribeInstances"
+    "autoscaling:DescribeAutoScalingGroups"
+    "autoscaling:DescribeAutoScalingInstances"
 
-- Kubernetes: You can run the etcd-cloud-operator in a statefulset, but you will need to provide a
-  few environment variables. See the [Readme](docs/kubernetes/README.md) for the `sts` provider.
-  The easiest way to get to going is to use the included `helm` [chart](chart/etcd-cloud-operator).
+-   Kubernetes: You can run the etcd-cloud-operator in a statefulset, but you will need to provide a
+    few environment variables. See the [Readme](docs/kubernetes/README.md) for the `sts` provider.
+    The easiest way to get to going is to use the included `helm` [chart](chart/etcd-cloud-operator).
 
 A Terraform [module] is available to easily bring up production-grade etcd clusters
 managed by the the operator out, and integrate them into your infrastructure.
 
 [etcd-operator]: https://github.com/coreos/etcd-operator
-[YAML file]: config.example.yaml
+[yaml file]: config.example.yaml
 [module]: terraform/platforms/aws

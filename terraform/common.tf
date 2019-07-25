@@ -30,7 +30,7 @@
 
 variable "instance_ssh_keys" {
   description = "List of SSH public keys that are allowed to login into nodes"
-  type        = "list"
+  type        = list(string)
 }
 
 variable "eco_image" {
@@ -63,7 +63,7 @@ variable "eco_backend_quota" {
 
 variable "ca" {
   description = "Optional CA keypair from which all certificates should be generated ('cert', 'key', 'alg')"
-  type        = "map"
+  type        = map(string)
 
   default = {
     "cert" = ""
@@ -77,58 +77,59 @@ variable "ca" {
 module "tls" {
   source = "../../modules/tls"
 
-  enabled               = "${var.eco_enable_tls}"
-  ca                    = "${var.ca}"
-  common_name           = "${local.advertise_address}"
-  generate_clients_cert = "${var.eco_require_client_certs}"
+  enabled               = var.eco_enable_tls
+  ca                    = var.ca
+  common_name           = local.advertise_address
+  generate_clients_cert = var.eco_require_client_certs
 }
 
 module "configuration" {
   source = "../../modules/configuration"
 
-  eco_asg_provider      = "${local.asg_provider}"
-  eco_snapshot_provider = "${local.snapshot_provider}"
+  eco_asg_provider      = local.asg_provider
+  eco_snapshot_provider = local.snapshot_provider
 
-  eco_unhealthy_member_ttl = "${local.unhealthy_member_ttl}"
-  eco_advertise_address    = "${local.advertise_address}"
-  eco_snapshot_bucket      = "${local.snapshot_bucket}"
+  eco_unhealthy_member_ttl = local.unhealthy_member_ttl
+  eco_advertise_address    = local.advertise_address
+  eco_snapshot_bucket      = local.snapshot_bucket
 
-  eco_ca_file             = "${var.eco_enable_tls == true ? module.ignition.eco_ca_file : ""}"
-  eco_cert_file           = "${var.eco_enable_tls == true ? module.ignition.eco_cert_file : ""}"
-  eco_key_file            = "${var.eco_enable_tls == true ? module.ignition.eco_key_file : ""}"
-  eco_require_client_cert = "${var.eco_require_client_certs}"
+  eco_ca_file             = var.eco_enable_tls == true ? module.ignition.eco_ca_file : ""
+  eco_cert_file           = var.eco_enable_tls == true ? module.ignition.eco_cert_file : ""
+  eco_key_file            = var.eco_enable_tls == true ? module.ignition.eco_key_file : ""
+  eco_require_client_cert = var.eco_require_client_certs
 
-  eco_snapshot_interval = "${var.eco_snapshot_interval}"
-  eco_snapshot_ttl      = "${var.eco_snapshot_ttl}"
+  eco_snapshot_interval = var.eco_snapshot_interval
+  eco_snapshot_ttl      = var.eco_snapshot_ttl
 
-  eco_backend_quota = "${var.eco_backend_quota}"
+  eco_backend_quota = var.eco_backend_quota
 }
 
 module "ignition" {
   source = "../../modules/ignition"
 
-  instance_ssh_keys = "${var.instance_ssh_keys}"
+  instance_ssh_keys = var.instance_ssh_keys
 
-  eco_image         = "${var.eco_image}"
-  eco_configuration = "${module.configuration.configuration}"
+  eco_image         = var.eco_image
+  eco_configuration = module.configuration.configuration
 
-  eco_cert = "${module.tls.clients_server_cert}"
-  eco_key  = "${module.tls.clients_server_key}"
-  eco_ca   = "${module.tls.ca}"
+  eco_cert = module.tls.clients_server_cert
+  eco_key  = module.tls.clients_server_key
+  eco_ca   = module.tls.ca
 
-  ignition_extra_config = "${var.ignition_extra_config}"
+  ignition_extra_config = var.ignition_extra_config
 }
 
 // Output.
 
 output "ca" {
-  value = "${module.tls.ca}"
+  value = module.tls.ca
 }
 
 output "clients_cert" {
-  value = "${module.tls.clients_cert}"
+  value = module.tls.clients_cert
 }
 
 output "clients_key" {
-  value = "${module.tls.clients_key}"
+  value = module.tls.clients_key
 }
+

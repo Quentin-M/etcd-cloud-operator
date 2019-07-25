@@ -7,15 +7,18 @@ resource "aws_s3_bucket" "config" {
     enabled = true
   }
 
-  tags = "${merge(map(
-    "Name", "${var.name}-config",
-    "managed_by", "etcd-cloud-operator"
-  ), var.extra_tags)}"
+  tags = merge(
+    {
+      "Name"       = "${var.name}-config"
+      "managed_by" = "etcd-cloud-operator"
+    },
+    var.extra_tags,
+  )
 
   server_side_encryption_configuration {
     rule {
       apply_server_side_encryption_by_default {
-        kms_master_key_id = "${aws_kms_key.key.arn}"
+        kms_master_key_id = aws_kms_key.key.arn
         sse_algorithm     = "aws:kms"
       }
     }
@@ -23,37 +26,44 @@ resource "aws_s3_bucket" "config" {
 }
 
 resource "aws_kms_key" "key" {
-  description         = "${var.name}"
+  description         = var.name
   enable_key_rotation = true
 
-  tags = "${merge(map(
-    "Name", "${var.name}",
-    "managed_by", "etcd-cloud-operator"
-  ), var.extra_tags)}"
+  tags = merge(
+    {
+      "Name"       = var.name
+      "managed_by" = "etcd-cloud-operator"
+    },
+    var.extra_tags,
+  )
 }
 
 resource "aws_s3_bucket_object" "ignition_config" {
   key        = "config.json"
-  bucket     = "${aws_s3_bucket.config.id}"
-  content    = "${module.ignition.ignition}"
-  kms_key_id = "${aws_kms_key.key.arn}"
+  bucket     = aws_s3_bucket.config.id
+  content    = module.ignition.ignition
+  kms_key_id = aws_kms_key.key.arn
 }
 
 resource "aws_s3_bucket" "backups" {
-  bucket = "${var.name}"
+  bucket = var.name
   acl    = "private"
 
   server_side_encryption_configuration {
     rule {
       apply_server_side_encryption_by_default {
-        kms_master_key_id = "${aws_kms_key.key.arn}"
+        kms_master_key_id = aws_kms_key.key.arn
         sse_algorithm     = "aws:kms"
       }
     }
   }
 
-  tags = "${merge(map(
-    "Name", "${var.name}",
-    "managed_by", "etcd-cloud-operator"
-  ), var.extra_tags)}"
+  tags = merge(
+    {
+      "Name"       = var.name
+      "managed_by" = "etcd-cloud-operator"
+    },
+    var.extra_tags,
+  )
 }
+

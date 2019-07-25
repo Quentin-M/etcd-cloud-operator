@@ -34,7 +34,7 @@ variable "associate_public_ips" {
 
 variable "subnets_ids" {
   description = "List of the subnet IDs to place the EC2 instances in (should span across AZs for availability)"
-  type        = "list"
+  type        = list(string)
 }
 
 variable "vpc_id" {
@@ -61,24 +61,25 @@ variable "load_balancer_internal" {
 
 variable "load_balancer_security_group_ids" {
   description = "List of the security group IDs to apply to the load balancer (ingress TCP 2379) (if empty, defaults to open to all)"
-  type        = "list"
+  type        = list(string)
   default     = []
 }
 
 variable "metrics_security_group_ids" {
   description = "List of the security group IDs authorized to reach etcd/node-exporter metrics using the internal instances' IPs (if empty, metrics are not exposed)"
-  type        = "list"
+  type        = list(string)
   default     = []
 }
 
 variable "ignition_extra_config" {
   description = "Extra ignition configuration that will get appended to the default ECO config"
   default     = {}
-  type        = "map"
+  type        = map(string)
 }
 
 variable "extra_tags" {
-  type        = "map"
+  type        = map(string)
   description = "Extra tags to associated with any AWS resources."
   default     = {}
 }
+

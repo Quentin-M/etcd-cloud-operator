@@ -13,16 +13,15 @@
 // limitations under the License.
 
 resource "aws_elb" "clients" {
-  name = "${replace(var.name, "/[^a-zA-Z0-9-]/", "-")}"
+  name = replace(var.name, "/[^a-zA-Z0-9-]/", "-")
 
-  internal = "${var.load_balancer_internal}"
-  subnets  = ["${var.subnets_ids}"]
+  internal = var.load_balancer_internal
+  subnets  = var.subnets_ids
 
-  security_groups = [
-    "${split(",", length(var.load_balancer_security_group_ids) > 0
-    ? join(",", var.load_balancer_security_group_ids)
-    : aws_security_group.elb.id)}",
-  ]
+  security_groups = split(
+    ",",
+    length(var.load_balancer_security_group_ids) > 0 ? join(",", var.load_balancer_security_group_ids) : aws_security_group.elb.id,
+  )
 
   cross_zone_load_balancing = true
   idle_timeout              = 3600
@@ -42,10 +41,13 @@ resource "aws_elb" "clients" {
     interval            = 5
   }
 
-  tags = "${merge(map(
-    "Name", "${var.name}",
-    "managed_by", "etcd-cloud-operator"
-  ), var.extra_tags)}"
+  tags = merge(
+    {
+      "Name"       = var.name
+      "managed_by" = "etcd-cloud-operator"
+    },
+    var.extra_tags,
+  )
 }
 
 resource "aws_security_group" "elb" {
@@ -55,7 +57,7 @@ resource "aws_security_group" "elb" {
   # count  = "${length(var.load_balancer_security_group_ids) > 0 ? 0 : 1}"
   name = "default.elb.${var.name}"
 
-  vpc_id = "${var.vpc_id}"
+  vpc_id = var.vpc_id
 
   ingress {
     from_port   = 2379
@@ -71,16 +73,20 @@ resource "aws_security_group" "elb" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  tags = "${merge(map(
-    "Name", "${var.name}",
-    "managed_by", "etcd-cloud-operator"
-  ), var.extra_tags)}"
+  tags = merge(
+    {
+      "Name"       = var.name
+      "managed_by" = "etcd-cloud-operator"
+    },
+    var.extra_tags,
+  )
 }
 
 locals {
   asg_provider         = "aws"
   snapshot_provider    = "s3"
   unhealthy_member_ttl = "3m"
-  snapshot_bucket      = "${aws_s3_bucket.backups.bucket}"
-  advertise_address    = "${var.route53_enabled == "true" ? join("", aws_route53_record.elb.*.name) : aws_elb.clients.dns_name}"
+  snapshot_bucket      = aws_s3_bucket.backups.bucket
+  advertise_address    = var.route53_enabled == "true" ? join("", aws_route53_record.elb.*.name) : aws_elb.clients.dns_name
 }
+

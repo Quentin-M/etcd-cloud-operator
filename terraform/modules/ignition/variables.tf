@@ -18,7 +18,7 @@ locals {
 
 variable "instance_ssh_keys" {
   description = "List of SSH public keys that are allowed to login into nodes"
-  type        = "list"
+  type        = list(string)
 }
 
 variable "eco_image" {
@@ -45,3 +45,4 @@ variable "ignition_extra_config" {
   description = "Extra ignition configuration that will get appended to the default ECO config"
   default     = {}
 }
+

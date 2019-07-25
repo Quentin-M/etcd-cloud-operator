@@ -13,5 +13,6 @@
 // limitations under the License.
 
 output "configuration" {
-  value = "${data.template_file.configuration.rendered}"
+  value = data.template_file.configuration.rendered
 }
+

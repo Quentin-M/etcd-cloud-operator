@@ -59,3 +59,4 @@ variable "eco_snapshot_bucket" {
 variable "eco_backend_quota" {
   description = "Defines the maximum amount of data that etcd can store, in bytes, before going into maintenance mode"
 }
+

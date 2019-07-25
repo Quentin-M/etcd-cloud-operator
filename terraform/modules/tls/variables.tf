@@ -18,7 +18,7 @@ variable "enabled" {
 
 variable "ca" {
   description = "Optional CA keypair from which all certificates should be generated ('cert', 'key', 'alg')"
-  type        = "map"
+  type        = map(string)
 }
 
 variable "common_name" {
@@ -28,3 +28,4 @@ variable "common_name" {
 variable "generate_clients_cert" {
   description = "Defines whether additional clients certificates should be generated in addition to server certificates"
 }
+

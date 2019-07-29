@@ -34,6 +34,8 @@ data "aws_ami" "coreos" {
     name   = "owner-id"
     values = ["595879546273"]
   }
+
+  owners = ["595879546273"]
 }
 
 data "ignition_config" "s3" {

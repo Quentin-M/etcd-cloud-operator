@@ -41,6 +41,11 @@ variable "vpc_id" {
   description = "ID of the VPC where the subnets are defined."
 }
 
+variable "route53_prefix" {
+  description = "Defines the primary dns prefix for the Route53 entry"
+  default = "etcd"
+}
+
 variable "route53_enabled" {
   description = "Defines whether a Route53 record should be created for client connections"
   default     = "false"

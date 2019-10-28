@@ -20,3 +20,11 @@ output "etcd_address" {
 output "instance_security_group" {
   value = "${aws_security_group.instances.id}"
 }
+
+output "lb_dns_name" {
+  value = "${aws_elb.clients.dns_name}"
+}
+
+output "lb_zone_id" {
+  value = "${aws_elb.clients.zone_id}"
+}

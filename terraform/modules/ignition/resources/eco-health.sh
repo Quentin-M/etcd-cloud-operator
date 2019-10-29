@@ -5,7 +5,7 @@ IP=$(/usr/bin/ip -4 addr show ${NIC} | /usr/bin/grep -oP '(?<=inet\s)\d+(\.\d+){
 
 i=0
 while true; do
-    /opt/bin/e --endpoints=${IP}:2379 endpoint --dial-timeout=500ms --command-timeout=500ms health | grep "successfully" 2>&1 > /dev/null
+    /opt/bin/e --endpoints=${IP}:2379 endpoint --dial-timeout=500ms --command-timeout=500ms health 2>&1 | grep "successfully" > /dev/null
     if [ $? -eq 0 ]; then
         echo "ECO is healthy"
         i=0

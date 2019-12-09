@@ -21,7 +21,6 @@ output "instance_security_group" {
   value = aws_security_group.instances.id
 }
 
-<<<<<<< HEAD
 output "lb_dns_name" {
   value = "${aws_elb.clients.dns_name}"
 }
@@ -29,5 +28,3 @@ output "lb_dns_name" {
 output "lb_zone_id" {
   value = "${aws_elb.clients.zone_id}"
 }
-=======
->>>>>>> Upgrading aws terraform module to 0.12

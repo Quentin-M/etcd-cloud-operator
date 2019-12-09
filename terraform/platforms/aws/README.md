@@ -17,7 +17,8 @@ terraform apply .
 ```
 
 A Terraform configuration file (terraform/platforms/aws/terraform.tfvars) should
-then be created. Note that all available ECO configuration knobs are not exposed.
+then be created. Note that all available ectd-cloud-operator (ECO) configuration
+knobs are not exposed.
 
 ```
 # Name of the deployment.

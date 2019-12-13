@@ -12,10 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-provider "ignition" {
-  version = "~> 1.2"
-}
-
 data "ignition_config" "main" {
   files = [
     data.ignition_file.eco-config.rendered,

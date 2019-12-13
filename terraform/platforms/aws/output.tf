@@ -18,7 +18,7 @@ output "etcd_address" {
 
 // You can attach extra rules using aws_security_group_rule
 output "instance_security_group" {
-  value = "${aws_security_group.instances.id}"
+  value = aws_security_group.instances.id
 }
 
 output "lb_dns_name" {

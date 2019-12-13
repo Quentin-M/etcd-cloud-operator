@@ -13,7 +13,7 @@
 // limitations under the License.
 
 output "ignition" {
-  value = "${data.ignition_config.main.rendered}"
+  value = data.ignition_config.main.rendered
 }
 
 output "eco_ca_file" {
@@ -27,3 +27,4 @@ output "eco_cert_file" {
 output "eco_key_file" {
   value = "/etc/eco/eco.key"
 }
+

@@ -13,24 +13,21 @@
 // limitations under the License.
 
 data "template_file" "configuration" {
-  template = "${file("${path.module}/config.yaml")}"
+  template = file("${path.module}/config.yaml")
 
-  vars {
-    asg_provider      = "${var.eco_asg_provider}"
-    snapshot_provider = "${var.eco_snapshot_provider}"
-
-    unhealthy_member_ttl = "${var.eco_unhealthy_member_ttl}"
-    advertise_address    = "${var.eco_advertise_address}"
-
-    cert_file           = "${var.eco_cert_file}"
-    key_file            = "${var.eco_key_file}"
-    ca_file             = "${var.eco_ca_file}"
-    require_client_cert = "${var.eco_require_client_cert}"
-
-    snapshot_interval = "${var.eco_snapshot_interval}"
-    snapshot_ttl      = "${var.eco_snapshot_ttl}"
-    snapshot_bucket   = "${var.eco_snapshot_bucket}"
-
-    backend_quota = "${var.eco_backend_quota}"
+  vars = {
+    asg_provider         = var.eco_asg_provider
+    snapshot_provider    = var.eco_snapshot_provider
+    unhealthy_member_ttl = var.eco_unhealthy_member_ttl
+    advertise_address    = var.eco_advertise_address
+    cert_file            = var.eco_cert_file
+    key_file             = var.eco_key_file
+    ca_file              = var.eco_ca_file
+    require_client_cert  = var.eco_require_client_cert
+    snapshot_interval    = var.eco_snapshot_interval
+    snapshot_ttl         = var.eco_snapshot_ttl
+    snapshot_bucket      = var.eco_snapshot_bucket
+    backend_quota        = var.eco_backend_quota
   }
 }
+

@@ -50,10 +50,12 @@ variable "eco_require_client_certs" {
 
 variable "eco_snapshot_interval" {
   description = "Defines the interval between consecutive etcd snapshots (e.g. 30m)"
+  default     = "30m"
 }
 
 variable "eco_snapshot_ttl" {
   description = "Defines the lifespan of each etcd snapshot (e.g. 24h)"
+  default     = "24h"
 }
 
 // 2GB
@@ -71,6 +73,11 @@ variable "ca" {
     "key"  = ""
     "alg"  = ""
   }
+}
+
+variable "eco_config_file" {
+  description = "Defines the content of the eco config file, if not empty, then will use this config file directly instead of of the config file templates (optional)"
+  default = ""
 }
 
 // Modules.
@@ -103,6 +110,7 @@ module "configuration" {
   eco_snapshot_ttl      = var.eco_snapshot_ttl
 
   eco_backend_quota = var.eco_backend_quota
+  eco_config_file = var.eco_config_file
 }
 
 module "ignition" {

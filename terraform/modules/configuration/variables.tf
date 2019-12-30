@@ -60,3 +60,6 @@ variable "eco_backend_quota" {
   description = "Defines the maximum amount of data that etcd can store, in bytes, before going into maintenance mode"
 }
 
+variable "eco_config_file" {
+  description = "Defines the content of the eco config file, if not empty, then will use this config file directly instead of of the config file templates (optional)"
+}

@@ -53,7 +53,7 @@ func (f *etcd) Save(r io.ReadCloser, metadata *snapshot.Metadata) error {
 	panic("not implemented")
 }
 
-// https://github.com/coreos/etcd/blob/master/snapshot/v3_snapshot.go
+// https://go.etcd.io/etcd/blob/master/snapshot/v3_snapshot.go
 func (f *etcd) Info() (*snapshot.Metadata, error) {
 	dbPath := filepath.Join(f.config.DataDir, "member/snap/db")
 	if _, err := os.Stat(dbPath); err != nil {

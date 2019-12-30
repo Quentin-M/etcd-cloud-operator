@@ -25,7 +25,7 @@ import (
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/crypto/ssh/agent"
 
-	"github.com/coreos/etcd/etcdserver/etcdserverpb"
+	"go.etcd.io/etcd/etcdserver/etcdserverpb"
 
 	"github.com/quentin-m/etcd-cloud-operator/pkg/etcd"
 )

@@ -24,9 +24,9 @@ import (
 	"os/exec"
 	"time"
 
-	etcdcl "github.com/coreos/etcd/clientv3"
-	"github.com/coreos/etcd/embed"
-	"github.com/coreos/etcd/pkg/types"
+	etcdcl "go.etcd.io/etcd/clientv3"
+	"go.etcd.io/etcd/embed"
+	"go.etcd.io/etcd/pkg/types"
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc/grpclog"
 
@@ -179,7 +179,7 @@ func (c *Server) Restore(metadata *snapshot.Metadata) error {
 	// directly from the data directory, to a temporary file when Get is called.
 	os.RemoveAll(c.cfg.DataDir)
 
-	// TODO: Use https://github.com/coreos/etcd/blob/master/snapshot/v3_snapshot.go.
+	// TODO: Use https://go.etcd.io/etcd/blob/master/snapshot/v3_snapshot.go.
 	cmd := exec.Command("/bin/sh", "-ec",
 		fmt.Sprintf("ETCDCTL_API=3 etcdctl snapshot restore %[1]s"+
 			" --name %[2]s"+
@@ -358,12 +358,12 @@ func (c *Server) startServer(ctx context.Context) error {
 		break
 	case <-c.server.Err():
 		// FIXME.
-		panic("server failed to start, and continuing might stale the application, exiting instead (github.com/coreos/etcd/issues/9533)")
+		panic("server failed to start, and continuing might stale the application, exiting instead (go.etcd.io/etcd/issues/9533)")
 		c.Stop(false, false)
 		return fmt.Errorf("server failed to start: %s", err)
 	case <-ctx.Done():
 		// FIXME.
-		panic("server failed to start, and continuing might stale the application, exiting instead (github.com/coreos/etcd/issues/9533)")
+		panic("server failed to start, and continuing might stale the application, exiting instead (go.etcd.io/etcd/issues/9533)")
 		c.Stop(false, false)
 		return fmt.Errorf("server took too long to become ready")
 	}

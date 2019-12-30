@@ -21,7 +21,7 @@ import (
 	"os"
 	"strings"
 
-	etcdcl "github.com/coreos/etcd/clientv3"
+	etcdcl "go.etcd.io/etcd/clientv3"
 	"github.com/coreos/pkg/capnslog"
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc/grpclog"
@@ -48,7 +48,7 @@ func main() {
 	log.SetOutput(os.Stdout)
 	log.SetLevel(logLevel)
 	log.SetFormatter(&log.TextFormatter{FullTimestamp: true})
-	capnslog.MustRepoLogger("github.com/coreos/etcd").SetLogLevel(map[string]capnslog.LogLevel{"etcdserver/api/v3rpc": capnslog.CRITICAL})
+	capnslog.MustRepoLogger("go.etcd.io/etcd").SetLogLevel(map[string]capnslog.LogLevel{"etcdserver/api/v3rpc": capnslog.CRITICAL})
 	etcdcl.SetLogger(grpclog.NewLoggerV2(ioutil.Discard, ioutil.Discard, os.Stderr))
 
 	// Read configuration.

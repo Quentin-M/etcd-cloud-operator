@@ -38,7 +38,7 @@ func main() {
 	log.SetOutput(os.Stdout)
 	log.SetLevel(logLevel)
 	log.SetFormatter(&log.TextFormatter{FullTimestamp: true})
-	capnslog.MustRepoLogger("github.com/coreos/etcd").SetLogLevel(map[string]capnslog.LogLevel{"etcdserver/api/v3rpc": capnslog.CRITICAL})
+	capnslog.MustRepoLogger("go.etcd.io/etcd").SetLogLevel(map[string]capnslog.LogLevel{"etcdserver/api/v3rpc": capnslog.CRITICAL})
 
 	// Read configuration.
 	config, err := loadConfig(*flagConfigPath)

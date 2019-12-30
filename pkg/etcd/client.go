@@ -23,12 +23,12 @@ import (
 	"sync"
 	"time"
 
-	"github.com/coreos/etcd/clientv3"
-	etcdcl "github.com/coreos/etcd/clientv3"
-	concurrency "github.com/coreos/etcd/clientv3/concurrency"
-	"github.com/coreos/etcd/etcdserver/api/v3rpc/rpctypes"
-	"github.com/coreos/etcd/etcdserver/etcdserverpb"
-	"github.com/coreos/etcd/mvcc"
+	"go.etcd.io/etcd/clientv3"
+	etcdcl "go.etcd.io/etcd/clientv3"
+	concurrency "go.etcd.io/etcd/clientv3/concurrency"
+	"go.etcd.io/etcd/etcdserver/api/v3rpc/rpctypes"
+	"go.etcd.io/etcd/etcdserver/etcdserverpb"
+	"go.etcd.io/etcd/mvcc"
 )
 
 type Client struct {

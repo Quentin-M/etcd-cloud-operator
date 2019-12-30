@@ -18,11 +18,12 @@ import (
 	"crypto/tls"
 	"fmt"
 	"net/url"
+	"reflect"
 	"strconv"
 	"strings"
 	"time"
 
-	"github.com/coreos/etcd/pkg/transport"
+	"go.etcd.io/etcd/pkg/transport"
 
 	"github.com/quentin-m/etcd-cloud-operator/pkg/providers/snapshot"
 )
@@ -45,10 +46,10 @@ type EtcdConfiguration struct {
 	ClientTransportSecurity SecurityConfig `yaml:"client-transport-security"`
 	PeerTransportSecurity   SecurityConfig `yaml:"peer-transport-security"`
 	BackendQuota            int64          `yaml:"backend-quota"`
+	InitACL                 *ACLConfig     `yaml:"init-acl,omitempty"`
 }
 
 type SecurityConfig struct {
-	CAFile        string `yaml:"ca-file"`
 	CertFile      string `yaml:"cert-file"`
 	KeyFile       string `yaml:"key-file"`
 	CertAuth      bool   `yaml:"client-cert-auth"`
@@ -56,9 +57,38 @@ type SecurityConfig struct {
 	AutoTLS       bool   `yaml:"auto-tls"`
 }
 
+// ACLConfig defines the acl configuration for etcd,
+// which will be applied to the etcd during provisioning.
+// --client-cert-auth must be set to true.
+type ACLConfig struct {
+	RootPassword string `yaml:"rootPassword"`
+	Roles        []Role `yaml:"roles"`
+	Users        []User `yaml:"users"`
+}
+
+// Role defines an etcd ACL role with its permissions.
+type Role struct {
+	Name        string       `yaml:"name"`
+	Permissions []Permission `yaml:"permissions"`
+}
+
+// Users defines an etcd ACL user with its password(optional) and binding roles.
+type User struct {
+	Name     string   `yaml:"name"`
+	Password string   `yaml:"password"`
+	Roles    []string `yaml:"roles"`
+}
+
+// Permission defines the permission.
+type Permission struct {
+	Mode     string `yaml:"mode"`
+	Key      string `yaml:"key"`
+	RangeEnd string `yaml:"rangeEnd"`
+	Prefix   bool   `yaml:"prefix"`
+}
+
 func (sc SecurityConfig) TLSInfo() transport.TLSInfo {
 	return transport.TLSInfo{
-		CAFile:         sc.CAFile,
 		CertFile:       sc.CertFile,
 		KeyFile:        sc.KeyFile,
 		ClientCertAuth: sc.CertAuth,
@@ -153,4 +183,8 @@ func localSnapshotProvider(dataDir string) snapshot.Provider {
 	lsp := snapshot.AsMap()["etcd"]
 	lsp.Configure(snapshot.Config{Params: map[string]interface{}{"data-dir": dataDir}})
 	return lsp
+}
+
+func (a *ACLConfig) Equal(b *ACLConfig) bool {
+	return reflect.DeepEqual(a, b)
 }

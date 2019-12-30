@@ -78,6 +78,11 @@ func loadConfig(path string) (config, error) {
 		return config, err
 	}
 
+	err = config.ECO.Etcd.Validate()
+	if err != nil {
+		return config, err
+	}
+
 	log.Infof("loaded configuration file %v", path)
 	return config, err
 }

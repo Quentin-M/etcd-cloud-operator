@@ -24,10 +24,6 @@ func (c *EtcdConfiguration) Validate() error {
 			return fmt.Errorf("--client-cert-auth must be set to true to enable the initial ACL config")
 		}
 
-		if c.InitACL.RootPassword == "" {
-			return fmt.Errorf("root password must not be empty")
-		}
-
 		roleNames, userNames := make(map[string]struct{}), make(map[string]struct{})
 
 		for _, role := range c.InitACL.Roles {

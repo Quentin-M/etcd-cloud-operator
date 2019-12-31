@@ -189,9 +189,16 @@ func (s *Operator) enableACL(ctx context.Context, config *etcd.ACLConfig) error 
 		return err
 	}
 
-	_, err = s.etcdClient.UserAdd(ctx, "root", config.RootPassword)
-	if err != nil && err != rpctypes.ErrUserAlreadyExist {
-		return err
+	if config.RootPassword == nil || *config.RootPassword == "" {
+		_, err = s.etcdClient.UserAddWithOptions(ctx, "root", "", &clientv3.UserAddOptions{NoPassword: true})
+		if err != nil && err != rpctypes.ErrUserAlreadyExist {
+			return err
+		}
+	} else {
+		_, err = s.etcdClient.UserAdd(ctx, "root", *config.RootPassword)
+		if err != nil && err != rpctypes.ErrUserAlreadyExist {
+			return err
+		}
 	}
 
 	if _, err := s.etcdClient.UserGrantRole(ctx, "root", "root"); err != nil {

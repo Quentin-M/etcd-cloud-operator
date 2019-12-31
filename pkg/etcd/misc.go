@@ -61,9 +61,9 @@ type SecurityConfig struct {
 // which will be applied to the etcd during provisioning.
 // --client-cert-auth must be set to true.
 type ACLConfig struct {
-	RootPassword string `yaml:"rootPassword"`
-	Roles        []Role `yaml:"roles"`
-	Users        []User `yaml:"users"`
+	RootPassword *string `yaml:"rootPassword,omitempty"`
+	Roles        []Role  `yaml:"roles"`
+	Users        []User  `yaml:"users"`
 }
 
 // Role defines an etcd ACL role with its permissions.

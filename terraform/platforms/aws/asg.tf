@@ -82,7 +82,7 @@ resource "aws_launch_configuration" "main" {
   security_groups      = [aws_security_group.instances.id]
   iam_instance_profile = aws_iam_instance_profile.instances.arn
   user_data            = data.ignition_config.s3.rendered
-  ebs_optimized        = "true"
+  ebs_optimized        = true
 
   associate_public_ip_address = var.associate_public_ips
 

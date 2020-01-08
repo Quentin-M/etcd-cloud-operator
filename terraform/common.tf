@@ -40,11 +40,12 @@ variable "eco_image" {
 
 variable "eco_enable_tls" {
   description = "Defines whether etcd should expect TLS clients connections"
-  default     = true
+  default     = "true"
 }
 
 variable "eco_require_client_certs" {
   description = "Defines whether etcd should expect client certificates for client connections"
+  default     = "false"
 }
 
 variable "eco_snapshot_interval" {
@@ -93,9 +94,9 @@ module "configuration" {
   eco_advertise_address    = local.advertise_address
   eco_snapshot_bucket      = local.snapshot_bucket
 
-  eco_ca_file             = var.eco_enable_tls == true ? module.ignition.eco_ca_file : ""
-  eco_cert_file           = var.eco_enable_tls == true ? module.ignition.eco_cert_file : ""
-  eco_key_file            = var.eco_enable_tls == true ? module.ignition.eco_key_file : ""
+  eco_ca_file             = var.eco_enable_tls == "true" ? module.ignition.eco_ca_file : ""
+  eco_cert_file           = var.eco_enable_tls == "true" ? module.ignition.eco_cert_file : ""
+  eco_key_file            = var.eco_enable_tls == "true" ? module.ignition.eco_key_file : ""
   eco_require_client_cert = var.eco_require_client_certs
 
   eco_snapshot_interval = var.eco_snapshot_interval

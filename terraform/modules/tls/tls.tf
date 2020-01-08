@@ -15,14 +15,14 @@
 # CA.
 
 resource "tls_private_key" "ca" {
-  count = var.enabled == "true" && length(var.ca["key"]) == 0 ? 1 : 0
+  count = var.enabled == true && length(var.ca["key"]) == 0 ? 1 : 0
 
   algorithm = "RSA"
   rsa_bits  = "2048"
 }
 
 resource "tls_self_signed_cert" "ca" {
-  count = var.enabled == "true" && length(var.ca["key"]) == 0 ? 1 : 0
+  count = var.enabled == true && length(var.ca["key"]) == 0 ? 1 : 0
 
   key_algorithm         = tls_private_key.ca[0].algorithm
   private_key_pem       = tls_private_key.ca[0].private_key_pem
@@ -56,14 +56,14 @@ locals {
 # Certificate for the etcd client server.
 
 resource "tls_private_key" "clients-server" {
-  count = var.enabled == "true" ? 1 : 0
+  count = var.enabled == true ? 1 : 0
 
   algorithm = "RSA"
   rsa_bits  = "2048"
 }
 
 resource "tls_cert_request" "clients-server" {
-  count = var.enabled == "true" ? 1 : 0
+  count = var.enabled == true ? 1 : 0
 
   key_algorithm   = tls_private_key.clients-server[0].algorithm
   private_key_pem = tls_private_key.clients-server[0].private_key_pem
@@ -75,7 +75,7 @@ resource "tls_cert_request" "clients-server" {
 }
 
 resource "tls_locally_signed_cert" "clients-server" {
-  count = var.enabled == "true" ? 1 : 0
+  count = var.enabled == true ? 1 : 0
 
   cert_request_pem      = tls_cert_request.clients-server[0].cert_request_pem
   ca_key_algorithm      = local.ca["alg"]
@@ -97,14 +97,14 @@ resource "tls_locally_signed_cert" "clients-server" {
 # Certificates for the etcd clients.
 
 resource "tls_private_key" "clients" {
-  count = var.enabled == "true" && var.generate_clients_cert == "true" ? 1 : 0
+  count = var.enabled == true && var.generate_clients_cert == true ? 1 : 0
 
   algorithm = "RSA"
   rsa_bits  = "2048"
 }
 
 resource "tls_cert_request" "clients" {
-  count = var.enabled == "true" && var.generate_clients_cert == "true" ? 1 : 0
+  count = var.enabled == true && var.generate_clients_cert == true ? 1 : 0
 
   key_algorithm   = tls_private_key.clients[0].algorithm
   private_key_pem = tls_private_key.clients[0].private_key_pem
@@ -116,7 +116,7 @@ resource "tls_cert_request" "clients" {
 }
 
 resource "tls_locally_signed_cert" "clients" {
-  count = var.enabled == "true" && var.generate_clients_cert == "true" ? 1 : 0
+  count = var.enabled == true && var.generate_clients_cert == true ? 1 : 0
 
   cert_request_pem      = tls_cert_request.clients[0].cert_request_pem
   ca_key_algorithm      = local.ca["alg"]

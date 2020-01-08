@@ -33,19 +33,19 @@ instance_disk_size = "30"
 instance_ssh_keys = ["ssh-rsa ..."]
 
 # Defines whether public IPs should be assigned to the EC2 instances (mainly depends if public or private subnets are used).
-associate_public_ips = "true"
+associate_public_ips = true
 # List of the subnet IDs to place the EC2 instances in (should span across AZs for availability).
 subnets_ids = ["subnet-f438f793", "subnet-d4bea38c"]
 # ID of the VPC where the subnets are defined.
 vpc_id = "vpc-19f019"
 # Defines whether a Route53 record should be created for client connections.
-route53_enabled = "false"
+route53_enabled = false
 # Optional Route53 Zone ID under which an 'etcd' record should be created for client connections.
 route53_zone_id = ""
 # Route53 prefix name defines the shortname for the record. Appends to route53_zone_id name for fqdn.
 route53_prefix = "" #Default = "etcd"
 # Defines whether the load balancer for etcd will be internet facing or internal.
-load_balancer_internal = "false"
+load_balancer_internal = false
 # List of the security group IDs to apply to the load balancer (ingress TCP 2379) (if empty, defaults to open to all).
 load_balancer_security_group_ids = []
 # List of the security group IDs authorized to reach etcd/node-exporter metrics using the internal instances' IPs (if empty, metrics are not exposed)
@@ -54,9 +54,9 @@ metrics_security_group_ids = []
 # Container image of ECO to use.
 eco_image = "qmachu/etcd-cloud-operator:v3.3.3"
 # Defines whether etcd should expect TLS clients connections.
-eco_enable_tls = "true"
+eco_enable_tls = true
 # Defines whether etcd should expect client certificates for client connections.
-eco_require_client_certs = "false"
+eco_require_client_certs = false
 # Defines the interval between consecutive etcd snapshots (e.g. 30m).
 eco_snapshot_interval = "30m"
 # Defines the lifespan of each etcd snapshot (e.g. 24h).
@@ -111,18 +111,18 @@ module "eco" {
   instance_disk_size    = "30"
   instance_ssh_keys     = ["ssh-rsa ..."]
 
-  associate_public_ip_address      = "true"
+  associate_public_ip_address      = true
   subnets_ids                      = ["subnet-f438f793", "subnet-d4bea38c"]
   vpc_id                           = "vpc-19f019"
-  route53_enabled                  = "false"
+  route53_enabled                  = false
   route53_zone_id                  = ""
-  load_balancer_internal           = "false"
+  load_balancer_internal           = false
   load_balancer_security_group_ids = []
   metrics_security_group_ids       = []
 
   eco_image                  = "qmachu/etcd-cloud-operator:v3.3.3"
-  eco_enable_tls             = "true"
-  eco_require_client_certs   = "false"
+  eco_enable_tls             = true
+  eco_require_client_certs   = false
   eco_snapshot_interval      = "30m"
   eco_snapshot_ttl           = "24h"
 

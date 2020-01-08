@@ -87,6 +87,6 @@ locals {
   snapshot_provider    = "s3"
   unhealthy_member_ttl = "3m"
   snapshot_bucket      = aws_s3_bucket.backups.bucket
-  advertise_address    = var.route53_enabled == "true" ? join("", aws_route53_record.elb.*.name) : aws_elb.clients.dns_name
+  advertise_address    = var.route53_enabled == true ? join("", aws_route53_record.elb.*.name) : aws_elb.clients.dns_name
 }
 

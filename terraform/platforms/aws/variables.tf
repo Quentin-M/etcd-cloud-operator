@@ -48,7 +48,7 @@ variable "route53_prefix" {
 
 variable "route53_enabled" {
   description = "Defines whether a Route53 record should be created for client connections"
-  default     = "false"
+  default     = false
 }
 
 variable "route53_zone_id" {

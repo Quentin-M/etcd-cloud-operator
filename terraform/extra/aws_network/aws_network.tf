@@ -12,7 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-data "aws_availability_zones" "azs" {}
+data "aws_availability_zones" "azs" {
+}
 
 resource "aws_vpc" "main" {
   cidr_block           = "172.16.0.0/16"
@@ -20,24 +21,24 @@ resource "aws_vpc" "main" {
   enable_dns_support   = true
 
   tags = {
-    "Name" = "${var.name}"
+    "Name" = var.name
   }
 }
 
 resource "aws_internet_gateway" "main" {
-  vpc_id = "${aws_vpc.main.id}"
+  vpc_id = aws_vpc.main.id
 
-  tags {
-    "Name" = "${var.name}"
+  tags = {
+    "Name" = var.name
   }
 }
 
 resource "aws_subnet" "public" {
-  count = "${length(data.aws_availability_zones.azs.names)}"
+  count = length(data.aws_availability_zones.azs.names)
 
-  availability_zone = "${data.aws_availability_zones.azs.names[count.index]}"
-  cidr_block        = "${cidrsubnet(aws_vpc.main.cidr_block, 4, count.index)}"
-  vpc_id            = "${aws_vpc.main.id}"
+  availability_zone = data.aws_availability_zones.azs.names[count.index]
+  cidr_block        = cidrsubnet(aws_vpc.main.cidr_block, 4, count.index)
+  vpc_id            = aws_vpc.main.id
 
   tags = {
     "Name" = "public.${data.aws_availability_zones.azs.names[count.index]}.${var.name}"
@@ -45,22 +46,23 @@ resource "aws_subnet" "public" {
 }
 
 resource "aws_route_table_association" "public" {
-  count = "${aws_subnet.public.count}"
+  count = length(aws_subnet.public)
 
-  route_table_id = "${aws_route_table.public.*.id[count.index]}"
-  subnet_id      = "${aws_subnet.public.*.id[count.index]}"
+  route_table_id = aws_route_table.public[count.index].id
+  subnet_id      = aws_subnet.public[count.index].id
 }
 
 resource "aws_route_table" "public" {
-  count  = "${aws_subnet.public.count}"
-  vpc_id = "${aws_vpc.main.id}"
+  count  = length(aws_subnet.public)
+  vpc_id = aws_vpc.main.id
 
   route {
     cidr_block = "0.0.0.0/0"
-    gateway_id = "${aws_internet_gateway.main.id}"
+    gateway_id = aws_internet_gateway.main.id
   }
 
   tags = {
     "Name" = "${data.aws_availability_zones.azs.names[count.index]}.${var.name}"
   }
 }
+

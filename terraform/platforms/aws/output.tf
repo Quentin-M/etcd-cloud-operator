@@ -13,7 +13,7 @@
 // limitations under the License.
 
 output "etcd_address" {
-  value = "${var.eco_enable_tls == true ? "https" : "http"}://${var.route53_zone_id != "" ? join("", aws_route53_record.elb.*.name) : aws_elb.clients.dns_name}:2379"
+  value = "${var.eco_enable_tls == "true" ? "https" : "http"}://${var.route53_zone_id != "" ? join("", aws_route53_record.elb.*.name) : aws_elb.clients.dns_name}:2379"
 }
 
 // You can attach extra rules using aws_security_group_rule
@@ -22,9 +22,10 @@ output "instance_security_group" {
 }
 
 output "lb_dns_name" {
-  value = "${aws_elb.clients.dns_name}"
+  value = aws_elb.clients.dns_name
 }
 
 output "lb_zone_id" {
-  value = "${aws_elb.clients.zone_id}"
+  value = aws_elb.clients.zone_id
 }
+

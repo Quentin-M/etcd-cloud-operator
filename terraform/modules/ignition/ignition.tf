@@ -12,26 +12,30 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+provider "ignition" {
+  version = "~> 1.2"
+}
+
 data "ignition_config" "main" {
   files = [
-    "${data.ignition_file.eco-config.id}",
-    "${data.ignition_file.eco-ca.id}",
-    "${data.ignition_file.eco-crt.id}",
-    "${data.ignition_file.eco-key.id}",
-    "${data.ignition_file.eco-health.id}",
-    "${data.ignition_file.e.id}",
+    "${data.ignition_file.eco-config.rendered}",
+    "${data.ignition_file.eco-ca.rendered}",
+    "${data.ignition_file.eco-crt.rendered}",
+    "${data.ignition_file.eco-key.rendered}",
+    "${data.ignition_file.eco-health.rendered}",
+    "${data.ignition_file.e.rendered}",
   ]
 
   systemd = [
-    "${data.ignition_systemd_unit.docker.id}",
-    "${data.ignition_systemd_unit.locksmithd.id}",
-    "${data.ignition_systemd_unit.update-engine.id}",
-    "${data.ignition_systemd_unit.eco.id}",
-    "${data.ignition_systemd_unit.eco-health.id}",
-    "${data.ignition_systemd_unit.node-exporter.id}",
+    "${data.ignition_systemd_unit.docker.rendered}",
+    "${data.ignition_systemd_unit.locksmithd.rendered}",
+    "${data.ignition_systemd_unit.update-engine.rendered}",
+    "${data.ignition_systemd_unit.eco.rendered}",
+    "${data.ignition_systemd_unit.eco-health.rendered}",
+    "${data.ignition_systemd_unit.node-exporter.rendered}",
   ]
 
-  users = ["${data.ignition_user.core.id}"]
+  users = ["${data.ignition_user.core.rendered}"]
 
   append {
     source       = "${lookup(var.ignition_extra_config, "source", local.blank_ignition_config)}"

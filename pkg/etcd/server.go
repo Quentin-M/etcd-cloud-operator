@@ -24,10 +24,10 @@ import (
 	"os/exec"
 	"time"
 
+	log "github.com/sirupsen/logrus"
 	etcdcl "go.etcd.io/etcd/clientv3"
 	"go.etcd.io/etcd/embed"
 	"go.etcd.io/etcd/pkg/types"
-	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc/grpclog"
 
 	"github.com/quentin-m/etcd-cloud-operator/pkg/providers/snapshot"
@@ -336,6 +336,7 @@ func (c *Server) startServer(ctx context.Context) error {
 	etcdCfg.ListenMetricsUrls = metricsURLs(c.cfg.PrivateAddress)
 	etcdCfg.Metrics = "extensive"
 	etcdCfg.QuotaBackendBytes = c.cfg.DataQuota
+	etcdCfg.LogLevel = "warn"
 
 	// Start the server.
 	c.server, err = embed.StartEtcd(etcdCfg)

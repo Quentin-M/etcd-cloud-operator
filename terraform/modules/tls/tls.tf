@@ -134,3 +134,43 @@ resource "tls_locally_signed_cert" "clients" {
   }
 }
 
+# Certificates for the init ACL users.
+
+resource "tls_private_key" "acl_users" {
+  count = var.enabled == "true" && var.generate_clients_cert == "true" ? length(var.eco_init_acl_users) : 0
+
+  algorithm = "RSA"
+  rsa_bits  = "2048"
+}
+
+resource "tls_cert_request" "acl_users" {
+  count = var.enabled == "true" && var.generate_clients_cert == "true" ? length(var.eco_init_acl_users) : 0
+
+  key_algorithm   = tls_private_key.acl_users[count.index].algorithm
+  private_key_pem = tls_private_key.acl_users[count.index].private_key_pem
+
+  subject {
+    common_name  = var.eco_init_acl_users[count.index].name
+    organization = "etcd"
+  }
+}
+
+resource "tls_locally_signed_cert" "acl_users" {
+  count = var.enabled == "true" && var.generate_clients_cert == "true" ? length(var.eco_init_acl_users) : 0
+
+  cert_request_pem      = tls_cert_request.acl_users[count.index].cert_request_pem
+  ca_key_algorithm      = local.ca["alg"]
+  ca_private_key_pem    = local.ca["key"]
+  ca_cert_pem           = local.ca["cert"]
+  validity_period_hours = 43800
+
+  allowed_uses = [
+    "key_encipherment",
+    "client_auth",
+  ]
+
+  lifecycle {
+    ignore_changes = [validity_period_hours]
+  }
+}
+

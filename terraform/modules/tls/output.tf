@@ -32,3 +32,10 @@ output "clients_key" {
   value = var.enabled == "true" && var.generate_clients_cert == "true" ? join("", tls_private_key.clients.*.private_key_pem) : ""
 }
 
+output "acl_users_certs" {
+  value = var.enabled == "true" && var.generate_clients_cert == "true" ? tls_locally_signed_cert.acl_users : []
+}
+
+output "acl_users_keys" {
+  value = var.enabled == "true" && var.generate_clients_cert == "true" ? tls_private_key.acl_users : []
+}

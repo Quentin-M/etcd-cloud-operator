@@ -150,6 +150,8 @@ module "tls" {
   ca                    = var.ca
   common_name           = local.advertise_address
   generate_clients_cert = var.eco_require_client_certs
+
+  eco_init_acl_users = var.eco_init_acl_users
 }
 
 module "configuration" {
@@ -207,3 +209,10 @@ output "clients_key" {
   value = module.tls.clients_key
 }
 
+output "acl_users_certs" {
+  value = module.tls.acl_users_certs
+}
+
+output "acl_users_keys" {
+  value = module.tls.acl_users_keys
+}

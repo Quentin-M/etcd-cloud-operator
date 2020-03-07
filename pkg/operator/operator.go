@@ -181,7 +181,7 @@ func (s *Operator) execute() error {
 	case !s.etcdHealthy && !s.etcdRunning && (s.states["START"] != s.clusterSize || !s.isSeeder):
 		if s.state != "START" {
 			var err error
-			if s.etcdSnapshot, err = s.server.SnapshotInfo(); err != nil && err != snapshot.ErrNoSnapshot{
+			if s.etcdSnapshot, err = s.server.SnapshotInfo(); err != nil && err != snapshot.ErrNoSnapshot {
 				return err
 			}
 		}
@@ -201,6 +201,13 @@ func (s *Operator) execute() error {
 		s.state = "UNKNOWN"
 		return errors.New("no adequate action found")
 		////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	}
+
+	if s.state == "OK" && s.isSeeder && s.cfg.Etcd.InitACL != nil {
+		if err := s.reconcileInitACLConfig(s.cfg.Etcd.InitACL); err != nil {
+			log.WithError(err).Error("failed to reconcile initial ACL config")
+			return err
+		}
 	}
 
 	return nil

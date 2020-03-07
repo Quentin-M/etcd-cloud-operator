@@ -29,3 +29,6 @@ variable "generate_clients_cert" {
   description = "Defines whether additional clients certificates should be generated in addition to server certificates"
 }
 
+variable "eco_init_acl_users" {
+  description = "Defines the list of ACL users for the etcd (optional)"
+}

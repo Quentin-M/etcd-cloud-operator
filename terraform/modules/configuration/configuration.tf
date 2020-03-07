@@ -12,22 +12,58 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-data "template_file" "configuration" {
-  template = file("${path.module}/config.yaml")
-
-  vars = {
-    asg_provider         = var.eco_asg_provider
-    snapshot_provider    = var.eco_snapshot_provider
-    unhealthy_member_ttl = var.eco_unhealthy_member_ttl
-    advertise_address    = var.eco_advertise_address
-    cert_file            = var.eco_cert_file
-    key_file             = var.eco_key_file
-    ca_file              = var.eco_ca_file
-    require_client_cert  = var.eco_require_client_cert
-    snapshot_interval    = var.eco_snapshot_interval
-    snapshot_ttl         = var.eco_snapshot_ttl
-    snapshot_bucket      = var.eco_snapshot_bucket
-    backend_quota        = var.eco_backend_quota
-  }
+locals {
+  configuration = <<EOT
+eco:
+  unhealthy-member-ttl: ${var.eco_unhealthy_member_ttl}
+  etcd:
+    advertise-address: ${var.eco_advertise_address}
+    data-dir: /var/lib/eco/etcd
+    client-transport-security:
+      auto-tls: false
+      cert-file: ${var.eco_cert_file}
+      key-file: ${var.eco_key_file}
+      trusted-ca-file: ${var.eco_ca_file}
+      client-cert-auth: ${var.eco_require_client_cert}
+    peer-transport-security:
+      auto-tls: true
+    backend-quota: ${var.eco_backend_quota}
+%{ if length(var.eco_init_acl_users) > 0 ~}
+    init-acl:
+%{ if var.eco_init_acl_rootpw != "" ~}
+      rootPassword: ${var.eco_init_acl_rootpw}
+%{ endif ~}
+      roles:
+%{ for role in var.eco_init_acl_roles ~}
+      - name: ${role.name}
+        permissions:
+%{ for perm in role.permissions ~}
+        - mode: ${perm.mode}
+          key: ${perm.key}
+          prefix: ${perm.prefix}
+%{ if perm.rangeEnd != "" ~}
+          rangeEnd: ${perm.rangeEnd}
+%{ endif ~}
+%{ endfor ~}
+%{ endfor ~}
+      users:
+%{ for user in var.eco_init_acl_users ~}
+      - name: ${user.name}
+%{ if user.password != "" ~}
+        password: ${user.password}
+%{ endif ~}
+        roles:
+%{ for role in user.roles ~}
+        - ${role}
+%{ endfor ~}
+%{ endfor ~}
+%{ endif ~}
+  asg:
+    provider: ${var.eco_asg_provider}
+  snapshot:
+    provider: ${var.eco_snapshot_provider}
+    interval: ${var.eco_snapshot_interval}
+    ttl: ${var.eco_snapshot_ttl}
+    bucket: ${var.eco_snapshot_bucket}
+EOT
 }
-

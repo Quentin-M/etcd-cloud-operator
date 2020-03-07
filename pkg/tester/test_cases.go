@@ -18,7 +18,7 @@ import (
 	"errors"
 	"sync"
 
-	"github.com/coreos/etcd/etcdserver/etcdserverpb"
+	"go.etcd.io/etcd/etcdserver/etcdserverpb"
 	"github.com/quentin-m/etcd-cloud-operator/pkg/etcd"
 )
 

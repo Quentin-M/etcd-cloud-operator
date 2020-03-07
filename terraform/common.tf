@@ -50,10 +50,12 @@ variable "eco_require_client_certs" {
 
 variable "eco_snapshot_interval" {
   description = "Defines the interval between consecutive etcd snapshots (e.g. 30m)"
+  default     = "30m"
 }
 
 variable "eco_snapshot_ttl" {
   description = "Defines the lifespan of each etcd snapshot (e.g. 24h)"
+  default     = "24h"
 }
 
 // 2GB
@@ -73,6 +75,72 @@ variable "ca" {
   }
 }
 
+variable "eco_config_file" {
+  description = "Defines the content of the eco config file, if not empty, then will use this config file directly instead of of the config file templates (optional)"
+  default = ""
+}
+
+variable "eco_init_acl_rootpw" {
+  description = "Defines the root passsword of the etcd (optional)"
+
+  default = ""
+}
+
+// A list of acl roles,
+// e.g.
+/* eco_init_acl_roles = [
+    {
+      name = "k8s-apiserver"
+      permissions = [
+        {
+          mode = "readwrite"
+          key = "/registry"
+          prefix = true
+          rangeEnd = ""
+        }
+      ]
+    },
+    {
+      name = "tester"
+      permissions = [
+        {
+          mode = "readwrite"
+          key = "/tester"
+          prefix = true
+          rangeEnd = ""
+        }
+      ]
+    }
+  ]
+*/
+variable "eco_init_acl_roles" {
+  description = "Defines the list of ACL roles for the etcd (optional)"
+
+  default = []
+}
+
+// A list of acl users,
+// e.g.
+/* eco_init_acl_users = [
+    {
+      name = "k8s-apiserver"
+      roles = ["k8s-apiserver"]
+      password = ""
+    },
+    {
+      name = "tester"
+      roles = ["tester"]
+      password = "foo"
+    }
+  ]
+*/
+variable "eco_init_acl_users" {
+  description = "Defines the list of ACL users for the etcd (optional)"
+
+  default = []
+}
+
+
 // Modules.
 
 module "tls" {
@@ -82,6 +150,8 @@ module "tls" {
   ca                    = var.ca
   common_name           = local.advertise_address
   generate_clients_cert = var.eco_require_client_certs
+
+  eco_init_acl_users = var.eco_init_acl_users
 }
 
 module "configuration" {
@@ -103,6 +173,11 @@ module "configuration" {
   eco_snapshot_ttl      = var.eco_snapshot_ttl
 
   eco_backend_quota = var.eco_backend_quota
+  eco_config_file = var.eco_config_file
+
+  eco_init_acl_rootpw = var.eco_init_acl_rootpw
+  eco_init_acl_roles  = var.eco_init_acl_roles
+  eco_init_acl_users  = var.eco_init_acl_users
 }
 
 module "ignition" {
@@ -134,3 +209,10 @@ output "clients_key" {
   value = module.tls.clients_key
 }
 
+output "acl_users_certs" {
+  value = module.tls.acl_users_certs
+}
+
+output "acl_users_keys" {
+  value = module.tls.acl_users_keys
+}

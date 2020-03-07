@@ -36,6 +36,9 @@ failures.
     from the latest data revision available once the expected amount of instances
     are ready to start again.
 
+-   _ACL support_: A user can configure the ACL of etcd by providing an **init-acl** config
+    in the config file. See [init-acl.md](./docs/init-acl.md) for more information.
+
 The operator and etcd cluster can be easily configured using a [YAML file]. The
 configuration notably includes clients/peers TLS encryption/authentication, with
 the ability to automatically generate self-signed certificates if encryption

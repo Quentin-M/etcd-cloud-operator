@@ -13,6 +13,5 @@
 // limitations under the License.
 
 output "configuration" {
-  value = data.template_file.configuration.rendered
+  value = var.eco_config_file != "" ? var.eco_config_file : local.configuration
 }
-

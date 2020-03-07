@@ -29,6 +29,36 @@ eco:
       peer-client-cert-auth: false
     # Defines the maximum amount of data that etcd can store, in bytes, before going into maintenance mode
     backend-quota: 2147483648
+    # Defines the initial acl that will be applied to the etcd during provisioning.
+    init-acl:
+      rootPassword: rootpw # Optional
+      roles:
+      - name: k8s-apiserver
+        permissions:
+        - mode: readwrite
+          key: /registry # Default value for k8s keys.
+          prefix: true
+      - name: k8s-agent
+        permissions:
+        - mode: readwrite
+          key: /kubernetes-agent
+          prefix: true
+      - name: range-example-role
+        permissions:
+        - mode: read
+          key: /foo1
+          rangeEnd: /foo5 # Gives read permission to [/foo1, /foo5).
+      users:
+      - name: k8s-apiserver
+        roles:
+        - k8s-apiserver
+      - name: k8s-agent
+        roles:
+        - k8s-agent
+      - name: ranger-user
+        password: foo # Password is optional.
+        roles:
+        - range-example-role
   # Configuration of the auto-scaling group provider.
   asg:
     provider: aws

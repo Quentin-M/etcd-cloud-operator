@@ -52,7 +52,7 @@ load_balancer_security_group_ids = []
 metrics_security_group_ids = []
 
 # Container image of ECO to use.
-eco_image = "qmachu/etcd-cloud-operator:v3.3.3"
+eco_image = "quay.io/quentin_m/etcd-cloud-operator:v3.4.4a"
 # Defines whether etcd should expect TLS clients connections.
 eco_enable_tls = "true"
 # Defines whether etcd should expect client certificates for client connections.
@@ -120,7 +120,7 @@ module "eco" {
   load_balancer_security_group_ids = []
   metrics_security_group_ids       = []
 
-  eco_image                  = "qmachu/etcd-cloud-operator:v3.3.3"
+  eco_image                  = "quay.io/quentin_m/etcd-cloud-operator:v3.4.4a"
   eco_enable_tls             = "true"
   eco_require_client_certs   = "false"
   eco_snapshot_interval      = "30m"

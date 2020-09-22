@@ -49,14 +49,16 @@ type Server struct {
 }
 
 type ServerConfig struct {
-	Name               string
-	DataDir            string
-	DataQuota          int64
-	PublicAddress      string
-	PrivateAddress     string
-	ClientSC           SecurityConfig
-	PeerSC             SecurityConfig
-	UnhealthyMemberTTL time.Duration
+	Name                    string
+	DataDir                 string
+	DataQuota               int64
+	PublicAddress           string
+	PrivateAddress          string
+	ClientSC                SecurityConfig
+	PeerSC                  SecurityConfig
+	UnhealthyMemberTTL      time.Duration
+	AutoCompactionMode      string
+	AutoCompactionRetention string
 
 	// Optional, used in {Seed, Join} to periodically save snapshots.
 	SnapshotProvider snapshot.Provider
@@ -337,6 +339,8 @@ func (c *Server) startServer(ctx context.Context) error {
 	etcdCfg.ListenMetricsUrls = metricsURLs(c.cfg.PrivateAddress)
 	etcdCfg.Metrics = "extensive"
 	etcdCfg.QuotaBackendBytes = c.cfg.DataQuota
+	etcdCfg.AutoCompactionMode = c.cfg.AutoCompactionMode
+	etcdCfg.AutoCompactionRetention = c.cfg.AutoCompactionRetention
 	etcdCfg.LogLevel = "warn"
 
 	// Start the server.

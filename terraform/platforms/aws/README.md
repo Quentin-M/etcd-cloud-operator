@@ -63,6 +63,9 @@ eco_snapshot_interval = "30m"
 eco_snapshot_ttl = "24h"
 # Defines the maximum amount of data that etcd can store, in bytes, before going into maintenance mode
 eco_backend_quota = "2147483648"
+# Defines the auto-compaction policy (set retention to 0 to disable).
+eco_auto_compaction_mode = "periodic"
+eco_auto_compaction_retention = "0"
 ```
 
 Finally, let Terraform configure and create the infrastructure:
@@ -127,6 +130,8 @@ module "eco" {
   eco_snapshot_ttl           = "24h"
 
   eco_backend_quota = "${2 * 1024 * 1024 * 1024}"
+  eco_auto_compaction_mode = "periodic"
+  eco_auto_compaction_retention = "0"
 
   ignition_extra_config = {
     source = "${local.ignition_extra_config}"

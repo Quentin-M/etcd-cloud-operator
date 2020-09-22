@@ -46,6 +46,8 @@ type EtcdConfiguration struct {
 	ClientTransportSecurity SecurityConfig `yaml:"client-transport-security"`
 	PeerTransportSecurity   SecurityConfig `yaml:"peer-transport-security"`
 	BackendQuota            int64          `yaml:"backend-quota"`
+	AutoCompactionMode      string         `yaml:"auto-compaction-mode"`
+	AutoCompactionRetention string         `yaml:"auto-compaction-retention"`
 	InitACL                 *ACLConfig     `yaml:"init-acl,omitempty"`
 }
 

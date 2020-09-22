@@ -28,6 +28,8 @@ eco:
     peer-transport-security:
       auto-tls: true
     backend-quota: ${var.eco_backend_quota}
+    auto-compaction-mode: ${var.eco_auto_compaction_mode}
+    auto-compaction-retention: ${var.eco_auto_compaction_retention}
 %{ if length(var.eco_init_acl_users) > 0 ~}
     init-acl:
 %{ if var.eco_init_acl_rootpw != "" ~}

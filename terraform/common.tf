@@ -64,6 +64,16 @@ variable "eco_backend_quota" {
   default     = "2147483648"
 }
 
+variable "eco_auto_compaction_mode" {
+  description = "Defines the auto-compaction mode (periodic, or revision)"
+  default     = "periodic"
+}
+
+variable "eco_auto_compaction_retention" {
+  description = "Defines the auto-compaction retention (e.g. 5min for periodic based compaction, or a revision number. set to 0 to disable)"
+  default     = "0"
+}
+
 variable "ca" {
   description = "Optional CA keypair from which all certificates should be generated ('cert', 'key', 'alg')"
   type        = map(string)
@@ -172,8 +182,10 @@ module "configuration" {
   eco_snapshot_interval = var.eco_snapshot_interval
   eco_snapshot_ttl      = var.eco_snapshot_ttl
 
-  eco_backend_quota = var.eco_backend_quota
-  eco_config_file = var.eco_config_file
+  eco_backend_quota             = var.eco_backend_quota
+  eco_auto_compaction_mode      = var.eco_auto_compaction_mode
+  eco_auto_compaction_retention = var.eco_auto_compaction_retention
+  eco_config_file               = var.eco_config_file
 
   eco_init_acl_rootpw = var.eco_init_acl_rootpw
   eco_init_acl_roles  = var.eco_init_acl_roles

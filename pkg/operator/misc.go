@@ -140,17 +140,19 @@ func fetchStatus(httpClient *http.Client, instance asg.Instance) (*status, error
 
 func serverConfig(cfg Config, asgSelf asg.Instance, snapshotProvider snapshot.Provider) etcd.ServerConfig {
 	return etcd.ServerConfig{
-		Name:               asgSelf.Name(),
-		DataDir:            cfg.Etcd.DataDir,
-		DataQuota:          cfg.Etcd.BackendQuota,
-		PublicAddress:      stringOverride(asgSelf.Address(), cfg.Etcd.AdvertiseAddress),
-		PrivateAddress:     asgSelf.Address(),
-		ClientSC:           cfg.Etcd.ClientTransportSecurity,
-		PeerSC:             cfg.Etcd.PeerTransportSecurity,
-		UnhealthyMemberTTL: cfg.UnhealthyMemberTTL,
-		SnapshotProvider:   snapshotProvider,
-		SnapshotInterval:   cfg.Snapshot.Interval,
-		SnapshotTTL:        cfg.Snapshot.TTL,
+		Name:                    asgSelf.Name(),
+		DataDir:                 cfg.Etcd.DataDir,
+		DataQuota:               cfg.Etcd.BackendQuota,
+		AutoCompactionMode:      cfg.Etcd.AutoCompactionMode,
+		AutoCompactionRetention: cfg.Etcd.AutoCompactionRetention,
+		PublicAddress:           stringOverride(asgSelf.Address(), cfg.Etcd.AdvertiseAddress),
+		PrivateAddress:          asgSelf.Address(),
+		ClientSC:                cfg.Etcd.ClientTransportSecurity,
+		PeerSC:                  cfg.Etcd.PeerTransportSecurity,
+		UnhealthyMemberTTL:      cfg.UnhealthyMemberTTL,
+		SnapshotProvider:        snapshotProvider,
+		SnapshotInterval:        cfg.Snapshot.Interval,
+		SnapshotTTL:             cfg.Snapshot.TTL,
 	}
 }
 

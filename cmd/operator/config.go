@@ -43,6 +43,8 @@ func defaultConfig() config {
 					AutoTLS: true,
 				},
 				BackendQuota: 2 * 1024 * 1024 * 1024,
+				AutoCompactionMode: "periodic",
+				AutoCompactionRetention: "0",
 			},
 			Snapshot: snapshot.Config{
 				Interval: 30 * time.Minute,

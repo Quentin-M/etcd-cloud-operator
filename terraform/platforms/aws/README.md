@@ -25,6 +25,8 @@ knobs are not exposed.
 name = "eco-example"
 # Number of etcd members (must be odd).
 size = "3"
+# ID of the AMI to use for the EC2 instances (if empty, defaults to Flatcar Linux)
+instance_ami_id = ""
 # Type of the EC2 instances to launch.
 instance_type = "m5.large"
 # Size of the disk associated to the EC2 instances (in GB).
@@ -110,6 +112,7 @@ module "eco" {
   name = "eco-example"
   size = "3"
 
+  instance_ami_id       = ""
   instance_type         = "m5.large"
   instance_disk_size    = "30"
   instance_ssh_keys     = ["ssh-rsa ..."]

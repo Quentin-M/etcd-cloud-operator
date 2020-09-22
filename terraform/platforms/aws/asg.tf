@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-data "aws_ami" "coreos" {
+data "aws_ami" "flatcar" {
   most_recent = true
 
   filter {
     name   = "name"
-    values = ["CoreOS-stable-*"]
+    values = ["Flatcar-stable-*"]
   }
 
   filter {
@@ -32,10 +32,10 @@ data "aws_ami" "coreos" {
 
   filter {
     name   = "owner-id"
-    values = ["595879546273"]
+    values = ["075585003325"]
   }
 
-  owners = ["595879546273"]
+  owners = ["075585003325"]
 }
 
 data "ignition_config" "s3" {
@@ -76,7 +76,7 @@ resource "aws_autoscaling_group" "main" {
 resource "aws_launch_configuration" "main" {
   name_prefix = var.name
 
-  image_id      = data.aws_ami.coreos.image_id
+  image_id      = var.instance_ami_id != "" ? var.instance_ami_id : data.aws_ami.flatcar.image_id
   instance_type = var.instance_type
 
   security_groups      = [aws_security_group.instances.id]

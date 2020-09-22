@@ -179,7 +179,8 @@ func (c *Server) Restore(metadata *snapshot.Metadata) error {
 	// directly from the data directory, to a temporary file when Get is called.
 	os.RemoveAll(c.cfg.DataDir)
 
-	// TODO: Use https://go.etcd.io/etcd/blob/master/snapshot/v3_snapshot.go.
+	// TODO: Use https://github.com/etcd-io/etcd/blob/master/clientv3/snapshot/v3_snapshot.go rather than
+	// shelling out, now that it is publicly exposed.
 	cmd := exec.Command("/bin/sh", "-ec",
 		fmt.Sprintf("ETCDCTL_API=3 etcdctl snapshot restore %[1]s"+
 			" --name %[2]s"+

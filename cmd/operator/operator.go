@@ -21,10 +21,11 @@ import (
 	"os"
 	"strings"
 
-	etcdcl "go.etcd.io/etcd/clientv3"
 	"github.com/coreos/pkg/capnslog"
 	log "github.com/sirupsen/logrus"
+	etcdcl "go.etcd.io/etcd/clientv3"
 	"google.golang.org/grpc/grpclog"
+	"go.uber.org/zap"
 
 	"github.com/quentin-m/etcd-cloud-operator/pkg/operator"
 
@@ -48,8 +49,17 @@ func main() {
 	log.SetOutput(os.Stdout)
 	log.SetLevel(logLevel)
 	log.SetFormatter(&log.TextFormatter{FullTimestamp: true})
+
 	capnslog.MustRepoLogger("go.etcd.io/etcd").SetLogLevel(map[string]capnslog.LogLevel{"etcdserver/api/v3rpc": capnslog.CRITICAL})
 	etcdcl.SetLogger(grpclog.NewLoggerV2(ioutil.Discard, ioutil.Discard, os.Stderr))
+
+	zlCfg := zap.NewProductionConfig()
+	zlCfg.Level.UnmarshalText([]byte(*flagLogLevel))
+	zl, err := zlCfg.Build()
+	if err != nil {
+		log.WithError(err).Fatal("unable to parse zap's logging level")
+	}
+	zap.ReplaceGlobals(zl)
 
 	// Read configuration.
 	config, err := loadConfig(*flagConfigPath)

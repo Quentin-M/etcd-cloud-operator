@@ -23,9 +23,8 @@ import (
 	"strings"
 	"time"
 
-	"go.etcd.io/etcd/pkg/transport"
-
 	"github.com/quentin-m/etcd-cloud-operator/pkg/providers/snapshot"
+	"go.etcd.io/etcd/pkg/transport"
 )
 
 const (

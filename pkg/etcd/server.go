@@ -30,6 +30,7 @@ import (
 	"go.etcd.io/etcd/pkg/types"
 	"google.golang.org/grpc/grpclog"
 
+	"github.com/quentin-m/etcd-cloud-operator/pkg/logger"
 	"github.com/quentin-m/etcd-cloud-operator/pkg/providers/snapshot"
 	_ "github.com/quentin-m/etcd-cloud-operator/pkg/providers/snapshot/etcd"
 )
@@ -341,7 +342,8 @@ func (c *Server) startServer(ctx context.Context) error {
 	etcdCfg.QuotaBackendBytes = c.cfg.DataQuota
 	etcdCfg.AutoCompactionMode = c.cfg.AutoCompactionMode
 	etcdCfg.AutoCompactionRetention = c.cfg.AutoCompactionRetention
-	etcdCfg.LogLevel = "warn"
+	etcdCfg.ZapLoggerBuilder = logger.BuildZapConfigBuilder()
+	etcdCfg.LogLevel = logger.GetZapLogLevelFromLogrus().String()
 
 	// Start the server.
 	c.server, err = embed.StartEtcd(etcdCfg)

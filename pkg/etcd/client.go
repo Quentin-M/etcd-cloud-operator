@@ -29,6 +29,8 @@ import (
 	"go.etcd.io/etcd/etcdserver/api/v3rpc/rpctypes"
 	"go.etcd.io/etcd/etcdserver/etcdserverpb"
 	"go.etcd.io/etcd/mvcc"
+
+	"github.com/quentin-m/etcd-cloud-operator/pkg/logger"
 )
 
 type Client struct {
@@ -60,6 +62,7 @@ func NewClient(clientsAddresses []string, sc SecurityConfig, autoSync bool) (*Cl
 		DialTimeout:      defaultDialTimeout,
 		TLS:              tc,
 		AutoSyncInterval: autoSyncInterval,
+		LogConfig:        logger.BuildZapConfig(logger.GetZapLogLevelFromLogrus().String()),
 	})
 	if err != nil {
 		return nil, err

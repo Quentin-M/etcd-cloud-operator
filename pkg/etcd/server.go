@@ -37,7 +37,7 @@ import (
 var ErrMemberRevisionTooOld = errors.New("member revision older than the minimum desired revision")
 
 const (
-	defaultStartTimeout          = 900 * time.Second
+	defaultStartTimeout          = 1800 * time.Second
 	defaultStartRejoinTimeout    = 60 * time.Second
 	defaultMemberCleanerInterval = 15 * time.Second
 )

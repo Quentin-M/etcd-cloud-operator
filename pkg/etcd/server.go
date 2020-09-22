@@ -262,7 +262,7 @@ func (c *Server) SnapshotInfo() (*snapshot.Metadata, error) {
 	if localErr != nil && cfgErr != nil {
 		return nil, errors.New("failed to retrieve snapshot info")
 	}
-	if cfgErr != nil || (localErr == nil && localSnap.Revision > cfgSnap.Revision) {
+	if cfgErr != nil || (localErr == nil && localSnap.Revision >= cfgSnap.Revision) {
 		return localSnap, nil
 	}
 	return cfgSnap, cfgErr

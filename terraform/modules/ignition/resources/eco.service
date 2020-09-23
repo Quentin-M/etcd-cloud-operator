@@ -7,8 +7,8 @@ Requires=docker.service
 Restart=always
 RestartSec=1
 TimeoutStartSec=0
+TimeoutStopSec=30min
 StartLimitIntervalSec=0
-TimeoutStopSec=15min
 
 ExecStartPre=-/usr/bin/docker stop eco
 ExecStartPre=-/usr/bin/docker rm eco

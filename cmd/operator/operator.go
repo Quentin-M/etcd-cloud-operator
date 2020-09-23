@@ -21,11 +21,13 @@ import (
 	"os"
 	"strings"
 
-	etcdcl "go.etcd.io/etcd/clientv3"
 	"github.com/coreos/pkg/capnslog"
 	log "github.com/sirupsen/logrus"
+	etcdcl "go.etcd.io/etcd/clientv3"
+	"go.uber.org/zap"
 	"google.golang.org/grpc/grpclog"
 
+	"github.com/quentin-m/etcd-cloud-operator/pkg/logger"
 	"github.com/quentin-m/etcd-cloud-operator/pkg/operator"
 
 	// Register providers.
@@ -48,8 +50,10 @@ func main() {
 	log.SetOutput(os.Stdout)
 	log.SetLevel(logLevel)
 	log.SetFormatter(&log.TextFormatter{FullTimestamp: true})
-	capnslog.MustRepoLogger("go.etcd.io/etcd").SetLogLevel(map[string]capnslog.LogLevel{"etcdserver/api/v3rpc": capnslog.CRITICAL})
+
+	capnslog.MustRepoLogger("go.etcd.io/etcd").SetLogLevel(map[string]capnslog.LogLevel{"etcdserver/api/v3rpc": capnslog.CRITICAL}) // TODO: Remove me after v3.5
 	etcdcl.SetLogger(grpclog.NewLoggerV2(ioutil.Discard, ioutil.Discard, os.Stderr))
+	zap.ReplaceGlobals(logger.BuildZapLogger(*flagLogLevel))
 
 	// Read configuration.
 	config, err := loadConfig(*flagConfigPath)

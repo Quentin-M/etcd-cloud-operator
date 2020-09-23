@@ -18,8 +18,8 @@ import (
 	"errors"
 	"sync"
 
-	"go.etcd.io/etcd/etcdserver/etcdserverpb"
 	"github.com/quentin-m/etcd-cloud-operator/pkg/etcd"
+	"go.etcd.io/etcd/etcdserver/etcdserverpb"
 )
 
 type failureInjectorConfig struct {

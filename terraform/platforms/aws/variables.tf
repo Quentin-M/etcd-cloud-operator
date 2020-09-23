@@ -20,6 +20,11 @@ variable "size" {
   description = "Number of etcd members (must be odd)"
 }
 
+variable "instance_ami_id" {
+  description = "ID of the AMI to use for the EC2 instances (if empty, defaults to Flatcar Linux)"
+  default     = ""
+}
+
 variable "instance_type" {
   description = "Type of the EC2 instances to launch"
 }

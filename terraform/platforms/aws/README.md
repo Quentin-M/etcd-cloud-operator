@@ -25,6 +25,8 @@ knobs are not exposed.
 name = "eco-example"
 # Number of etcd members (must be odd).
 size = "3"
+# ID of the AMI to use for the EC2 instances (if empty, defaults to Flatcar Linux)
+instance_ami_id = ""
 # Type of the EC2 instances to launch.
 instance_type = "m5.large"
 # Size of the disk associated to the EC2 instances (in GB).
@@ -63,6 +65,9 @@ eco_snapshot_interval = "30m"
 eco_snapshot_ttl = "24h"
 # Defines the maximum amount of data that etcd can store, in bytes, before going into maintenance mode
 eco_backend_quota = "2147483648"
+# Defines the auto-compaction policy (set retention to 0 to disable).
+eco_auto_compaction_mode = "periodic"
+eco_auto_compaction_retention = "0"
 ```
 
 Finally, let Terraform configure and create the infrastructure:
@@ -107,6 +112,7 @@ module "eco" {
   name = "eco-example"
   size = "3"
 
+  instance_ami_id       = ""
   instance_type         = "m5.large"
   instance_disk_size    = "30"
   instance_ssh_keys     = ["ssh-rsa ..."]
@@ -127,6 +133,8 @@ module "eco" {
   eco_snapshot_ttl           = "24h"
 
   eco_backend_quota = "${2 * 1024 * 1024 * 1024}"
+  eco_auto_compaction_mode = "periodic"
+  eco_auto_compaction_retention = "0"
 
   ignition_extra_config = {
     source = "${local.ignition_extra_config}"

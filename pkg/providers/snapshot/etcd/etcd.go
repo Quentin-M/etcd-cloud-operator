@@ -15,7 +15,6 @@
 package etcd
 
 import (
-	"encoding/binary"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -23,7 +22,8 @@ import (
 	"path/filepath"
 	"time"
 
-	bolt "go.etcd.io/bbolt"
+	etcdsnap "go.etcd.io/etcd/clientv3/snapshot"
+	"go.uber.org/zap"
 
 	"github.com/quentin-m/etcd-cloud-operator/pkg/providers"
 	"github.com/quentin-m/etcd-cloud-operator/pkg/providers/snapshot"
@@ -53,40 +53,18 @@ func (f *etcd) Save(r io.ReadCloser, metadata *snapshot.Metadata) error {
 	panic("not implemented")
 }
 
-// https://go.etcd.io/etcd/blob/master/snapshot/v3_snapshot.go
 func (f *etcd) Info() (*snapshot.Metadata, error) {
 	dbPath := filepath.Join(f.config.DataDir, "member/snap/db")
 	if _, err := os.Stat(dbPath); err != nil {
 		return nil, snapshot.ErrNoSnapshot
 	}
 
-	db, err := bolt.Open(dbPath, 0400, &bolt.Options{ReadOnly: true})
+	status, err := etcdsnap.NewV3(zap.L()).Status(dbPath)
 	if err != nil {
 		return nil, err
 	}
-	defer db.Close()
 
-	var revision int64
-	var size int64
-	err = db.View(func(tx *bolt.Tx) error {
-		size = tx.Size()
-		c := tx.Cursor()
-		for next, _ := c.First(); next != nil; next, _ = c.Next() {
-			b := tx.Bucket(next)
-			if b == nil {
-				return fmt.Errorf("cannot get hash of bucket %s", string(next))
-			}
-			b.ForEach(func(k, v []byte) error {
-				if string(next) == "key" {
-					revision = int64(binary.BigEndian.Uint64(k[0:8]))
-				}
-				return nil
-			})
-		}
-		return nil
-	})
-
-	return snapshot.NewMetadata(dbPath, revision, size, f)
+	return snapshot.NewMetadata(dbPath, status.Revision, status.TotalSize, f)
 }
 
 func (f *etcd) Get(metadata *snapshot.Metadata) (string, bool, error) {

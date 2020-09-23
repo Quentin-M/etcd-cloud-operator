@@ -27,8 +27,11 @@ eco:
       key-file:
       trusted-ca-file:
       peer-client-cert-auth: false
-    # Defines the maximum amount of data that etcd can store, in bytes, before going into maintenance mode
+    # Defines the maximum amount of data that etcd can store, in bytes, before going into maintenance mode.
     backend-quota: 2147483648
+    # Defines the auto-compaction policy (set retention to 0 to disable).
+    auto-compaction-mode: periodic
+    auto-compaction-retention: "0"
     # Defines the initial acl that will be applied to the etcd during provisioning.
     init-acl:
       rootPassword: rootpw # Optional

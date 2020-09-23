@@ -30,6 +30,7 @@ import (
 	"go.etcd.io/etcd/pkg/types"
 	"google.golang.org/grpc/grpclog"
 
+	"github.com/quentin-m/etcd-cloud-operator/pkg/logger"
 	"github.com/quentin-m/etcd-cloud-operator/pkg/providers/snapshot"
 	_ "github.com/quentin-m/etcd-cloud-operator/pkg/providers/snapshot/etcd"
 )
@@ -37,7 +38,7 @@ import (
 var ErrMemberRevisionTooOld = errors.New("member revision older than the minimum desired revision")
 
 const (
-	defaultStartTimeout          = 900 * time.Second
+	defaultStartTimeout          = 1800 * time.Second
 	defaultStartRejoinTimeout    = 60 * time.Second
 	defaultMemberCleanerInterval = 15 * time.Second
 )
@@ -49,14 +50,16 @@ type Server struct {
 }
 
 type ServerConfig struct {
-	Name               string
-	DataDir            string
-	DataQuota          int64
-	PublicAddress      string
-	PrivateAddress     string
-	ClientSC           SecurityConfig
-	PeerSC             SecurityConfig
-	UnhealthyMemberTTL time.Duration
+	Name                    string
+	DataDir                 string
+	DataQuota               int64
+	PublicAddress           string
+	PrivateAddress          string
+	ClientSC                SecurityConfig
+	PeerSC                  SecurityConfig
+	UnhealthyMemberTTL      time.Duration
+	AutoCompactionMode      string
+	AutoCompactionRetention string
 
 	// Optional, used in {Seed, Join} to periodically save snapshots.
 	SnapshotProvider snapshot.Provider
@@ -179,7 +182,8 @@ func (c *Server) Restore(metadata *snapshot.Metadata) error {
 	// directly from the data directory, to a temporary file when Get is called.
 	os.RemoveAll(c.cfg.DataDir)
 
-	// TODO: Use https://go.etcd.io/etcd/blob/master/snapshot/v3_snapshot.go.
+	// TODO: Use https://github.com/etcd-io/etcd/blob/master/clientv3/snapshot/v3_snapshot.go rather than
+	// shelling out, now that it is publicly exposed.
 	cmd := exec.Command("/bin/sh", "-ec",
 		fmt.Sprintf("ETCDCTL_API=3 etcdctl snapshot restore %[1]s"+
 			" --name %[2]s"+
@@ -261,7 +265,7 @@ func (c *Server) SnapshotInfo() (*snapshot.Metadata, error) {
 	if localErr != nil && cfgErr != nil {
 		return nil, errors.New("failed to retrieve snapshot info")
 	}
-	if cfgErr != nil || (localErr == nil && localSnap.Revision > cfgSnap.Revision) {
+	if cfgErr != nil || (localErr == nil && localSnap.Revision >= cfgSnap.Revision) {
 		return localSnap, nil
 	}
 	return cfgSnap, cfgErr
@@ -336,7 +340,10 @@ func (c *Server) startServer(ctx context.Context) error {
 	etcdCfg.ListenMetricsUrls = metricsURLs(c.cfg.PrivateAddress)
 	etcdCfg.Metrics = "extensive"
 	etcdCfg.QuotaBackendBytes = c.cfg.DataQuota
-	etcdCfg.LogLevel = "warn"
+	etcdCfg.AutoCompactionMode = c.cfg.AutoCompactionMode
+	etcdCfg.AutoCompactionRetention = c.cfg.AutoCompactionRetention
+	etcdCfg.ZapLoggerBuilder = logger.BuildZapConfigBuilder()
+	etcdCfg.LogLevel = logger.GetZapLogLevelFromLogrus().String()
 
 	// Start the server.
 	c.server, err = embed.StartEtcd(etcdCfg)

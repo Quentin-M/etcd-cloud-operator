@@ -1,0 +1,14 @@
+[Unit]
+Description=Telegraf
+After=docker.service
+Requires=docker.service
+
+[Service]
+TimeoutStartSec=0
+Restart=always
+ExecStartPre=-/usr/bin/docker stop telegraf
+ExecStartPre=-/usr/bin/docker rm telegraf
+ExecStart=/usr/bin/docker run --rm --name telegraf --net=host --pid=host telegraf:1.15.3
+
+[Install]
+WantedBy=multi-user.target

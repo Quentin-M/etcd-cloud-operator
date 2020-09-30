@@ -29,6 +29,7 @@ data "ignition_config" "main" {
     data.ignition_systemd_unit.eco.rendered,
     data.ignition_systemd_unit.eco-health.rendered,
     data.ignition_systemd_unit.node-exporter.rendered,
+    data.ignition_systemd_unit.telegraf.rendered,
   ]
 
   users = [data.ignition_user.core.rendered]
@@ -88,6 +89,12 @@ data "ignition_systemd_unit" "eco-health" {
 data "ignition_systemd_unit" "node-exporter" {
   name    = "node-exporter.service"
   content = file("${path.module}/resources/node-exporter.service")
+}
+
+data "ignition_systemd_unit" "telegraf" {
+  name    = "telegraf.service"
+  content = file("${path.module}/resources/telegraf.service")
+  count = var.telegraf.enabled == "true" ? 1 : 0
 }
 
 data "ignition_file" "eco-config" {

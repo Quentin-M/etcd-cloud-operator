@@ -94,7 +94,6 @@ data "ignition_systemd_unit" "node-exporter" {
 data "ignition_systemd_unit" "telegraf" {
   name    = "telegraf.service"
   content = file("${path.module}/resources/telegraf.service")
-  count = var.telegraf.enabled == "true" ? 1 : 0
 }
 
 data "ignition_file" "eco-config" {

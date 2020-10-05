@@ -45,4 +45,3 @@ variable "ignition_extra_config" {
   description = "Extra ignition configuration that will get appended to the default ECO config"
   default     = {}
 }
-

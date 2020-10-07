@@ -21,11 +21,13 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
-	"os/exec"
 	"time"
 
 	log "github.com/sirupsen/logrus"
 	etcdcl "go.etcd.io/etcd/clientv3"
+	etcdsnap "go.etcd.io/etcd/clientv3/snapshot"
+	"go.uber.org/zap"
+
 	"go.etcd.io/etcd/embed"
 	"go.etcd.io/etcd/pkg/types"
 	"google.golang.org/grpc/grpclog"
@@ -182,22 +184,19 @@ func (c *Server) Restore(metadata *snapshot.Metadata) error {
 	// directly from the data directory, to a temporary file when Get is called.
 	os.RemoveAll(c.cfg.DataDir)
 
-	// TODO: Use https://github.com/etcd-io/etcd/blob/master/clientv3/snapshot/v3_snapshot.go rather than
-	// shelling out, now that it is publicly exposed.
-	cmd := exec.Command("/bin/sh", "-ec",
-		fmt.Sprintf("ETCDCTL_API=3 etcdctl snapshot restore %[1]s"+
-			" --name %[2]s"+
-			" --initial-cluster %[2]s=%[3]s"+
-			" --initial-cluster-token %[4]s"+
-			" --initial-advertise-peer-urls %[3]s"+
-			" --data-dir %[5]s"+
-			" --skip-hash-check",
-			path, c.cfg.Name, peerURL(c.cfg.PrivateAddress, c.cfg.PeerSC.TLSEnabled()),
-			embed.NewConfig().InitialClusterToken, c.cfg.DataDir,
-		),
-	)
-	if out, err := cmd.CombinedOutput(); err != nil {
-		return fmt.Errorf("etcdctl failed to restore:\n %s", out)
+	restorePeerURL := peerURL(c.cfg.PrivateAddress, c.cfg.PeerSC.TLSEnabled())
+	restoreCfg := etcdsnap.RestoreConfig{
+		SnapshotPath:        path,
+		Name:                c.cfg.Name,
+		PeerURLs:            []string{restorePeerURL},
+		InitialCluster:      fmt.Sprintf("%s=%s", c.cfg.Name, restorePeerURL),
+		InitialClusterToken: embed.NewConfig().InitialClusterToken,
+		OutputDataDir:       c.cfg.DataDir,
+		SkipHashCheck:       true,
+	}
+
+	if err := etcdsnap.NewV3(zap.L()).Restore(restoreCfg); err != nil {
+		return fmt.Errorf("etcdctl failed to restore:\n %s", err)
 	}
 
 	return nil

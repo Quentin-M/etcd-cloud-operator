@@ -337,7 +337,7 @@ func (c *Server) startServer(ctx context.Context) error {
 	etcdCfg.APUrls, _ = types.NewURLs([]string{peerURL(c.cfg.PrivateAddress, c.cfg.PeerSC.TLSEnabled())})
 	etcdCfg.LCUrls, _ = types.NewURLs([]string{ClientURL(c.cfg.PrivateAddress, c.cfg.ClientSC.TLSEnabled())})
 	etcdCfg.ACUrls, _ = types.NewURLs([]string{ClientURL(c.cfg.PublicAddress, c.cfg.ClientSC.TLSEnabled())})
-	etcdCfg.ListenMetricsUrls = metricsURLs(c.cfg.PrivateAddress)
+	etcdCfg.ListenMetricsUrls = fmt.Sprintf("%s,%s", metricsURLs(c.cfg.PrivateAddress), metricsURLs("127.0.0.1"))
 	etcdCfg.Metrics = "extensive"
 	etcdCfg.QuotaBackendBytes = c.cfg.DataQuota
 	etcdCfg.AutoCompactionMode = c.cfg.AutoCompactionMode

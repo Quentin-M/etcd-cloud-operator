@@ -198,7 +198,8 @@ module "ignition" {
   instance_ssh_keys = var.instance_ssh_keys
 
   eco_image         = var.eco_image
-  eco_configuration = module.configuration.configuration
+  eco_configuration = module.configuration.eco_configuration
+  telegraf_configuration = module.configuration.telegraf_configuration
 
   eco_cert = module.tls.clients_server_cert
   eco_key  = module.tls.clients_server_key

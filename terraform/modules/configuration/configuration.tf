@@ -13,7 +13,7 @@
 // limitations under the License.
 
 locals {
-  configuration = <<EOT
+  eco_configuration = <<EOT
 eco:
   unhealthy-member-ttl: ${var.eco_unhealthy_member_ttl}
   etcd:
@@ -67,5 +67,16 @@ eco:
     interval: ${var.eco_snapshot_interval}
     ttl: ${var.eco_snapshot_ttl}
     bucket: ${var.eco_snapshot_bucket}
+EOT
+   telegraf_configuration = <<EOT
+[inputs.prometheus]
+## An array of urls to scrape metrics from.
+urls = ["http://localhost:2381/metrics"]
+metric_version = 2
+[outputs.graphite]
+graphite_tag_support = true
+prefix = ${telegraf_graphite_prefix}
+servers = [${telegraf_graphite_uri}]
+timeout = 2
 EOT
 }

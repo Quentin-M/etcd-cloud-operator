@@ -41,6 +41,19 @@ variable "eco_configuration" {
   description = "Defines the configuration for ECO"
 }
 
+variable "telegraf_configuration" {
+  description = "Defines the configuration for telegraf"
+}
+
+variable "telegraf_graphite_uri" {
+  description = "Defines graphite host to relay telegraf metrics to"
+}
+
+variable "telegraf_graphite_prefix" {
+  description = "Defines graphite prefix for relaying metrics"
+  default = "eco"
+}
+
 variable "ignition_extra_config" {
   description = "Extra ignition configuration that will get appended to the default ECO config"
   default     = {}

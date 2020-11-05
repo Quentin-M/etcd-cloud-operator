@@ -96,6 +96,16 @@ data "ignition_systemd_unit" "telegraf" {
   content = file("${path.module}/resources/telegraf.service")
 }
 
+data "ignition_file" "telegraf-config" {
+  filesystem = "root"
+  path       = "/etc/telegraf/telegraf.conf"
+  mode       = 420
+
+  content {
+    content = var.telegraf_configuration
+  }
+}
+
 data "ignition_file" "eco-config" {
   filesystem = "root"
   path       = "/etc/eco/config.yaml"

@@ -73,7 +73,7 @@ variable "eco_config_file" {
 }
 
 variable "telegraf_config_file" {
-  description = "Defines the content of the Telegraf config file (To define only outputs use telegraf_outputs_config)"
+  description = "Defines the content of the Telegraf config file"
 }
 
 variable "telegraf_outputs_config" {

@@ -77,6 +77,5 @@ metric_version = 2
 graphite_tag_support = true
 prefix = "${var.telegraf_graphite_prefix}"
 servers = ["${var.telegraf_graphite_uri}"]
-timeout = 2
 EOT
 }

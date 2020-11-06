@@ -1,7 +1,7 @@
 [Unit]
 Description=Telegraf
-After=docker.service
-Requires=docker.service
+After=docker.service eco.service
+Requires=docker.service eco.service
 
 [Service]
 TimeoutStartSec=0
@@ -11,5 +11,4 @@ ExecStartPre=-/usr/bin/docker rm telegraf
 ExecStart=/usr/bin/docker run --rm --name telegraf --net=host -v /etc/telegraf/telegraf.conf:/etc/telegraf/telegraf.conf ${image}
 
 [Install]
-Wants=eco.service
-After=network.target eco.service
+WantedBy=multi-user.target

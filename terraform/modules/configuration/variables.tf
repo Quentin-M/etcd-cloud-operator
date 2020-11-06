@@ -73,7 +73,7 @@ variable "eco_config_file" {
 }
 
 variable "telegraf_config_file" {
-  description = "Defines the content of the Telegraf config file, if not empty, then will use this config file directly instead of of the config file templates (optional)"
+  description = "Defines the content of the Telegraf config file"
 }
 
 variable "eco_init_acl_rootpw" {

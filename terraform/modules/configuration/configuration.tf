@@ -75,8 +75,8 @@ urls = ["http://localhost:2381/metrics"]
 metric_version = 2
 [outputs.graphite]
 graphite_tag_support = true
-prefix = ${telegraf_graphite_prefix}
-servers = [${telegraf_graphite_uri}]
+prefix = "${var.telegraf_graphite_prefix}"
+servers = ["${var.telegraf_graphite_uri}"]
 timeout = 2
 EOT
 }

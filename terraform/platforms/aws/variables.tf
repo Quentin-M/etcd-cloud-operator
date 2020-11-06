@@ -88,3 +88,11 @@ variable "extra_tags" {
   default     = {}
 }
 
+variable "telegraf_graphite_uri" {
+  description = "Defines graphite host to relay telegraf metrics to"
+}
+
+variable "telegraf_graphite_prefix" {
+  description = "Defines graphite prefix for relaying metrics"
+  default = "eco"
+}

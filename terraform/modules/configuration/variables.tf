@@ -72,6 +72,10 @@ variable "eco_config_file" {
   description = "Defines the content of the eco config file, if not empty, then will use this config file directly instead of of the config file templates (optional)"
 }
 
+variable "telegraf_config_file" {
+  description = "Defines the content of the eco config file, if not empty, then will use this config file directly instead of of the config file templates (optional)"
+}
+
 variable "eco_init_acl_rootpw" {
   description = "Defines the root passsword of the etcd (optional)"
 }
@@ -82,4 +86,13 @@ variable "eco_init_acl_roles" {
 
 variable "eco_init_acl_users" {
   description = "Defines the list of ACL users for the etcd (optional)"
+}
+
+variable "telegraf_graphite_uri" {
+  description = "Defines graphite host to relay telegraf metrics to"
+}
+
+variable "telegraf_graphite_prefix" {
+  description = "Defines graphite prefix for relaying metrics"
+  default = "eco"
 }

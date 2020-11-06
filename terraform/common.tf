@@ -186,6 +186,9 @@ module "configuration" {
   eco_auto_compaction_mode      = var.eco_auto_compaction_mode
   eco_auto_compaction_retention = var.eco_auto_compaction_retention
   eco_config_file               = var.eco_config_file
+  telegraf_config_file          = var.eco_config_file
+  telegraf_graphite_uri         = var.telegraf_graphite_uri
+  telegraf_graphite_prefix      = var.telegraf_graphite_prefix
 
   eco_init_acl_rootpw = var.eco_init_acl_rootpw
   eco_init_acl_roles  = var.eco_init_acl_roles

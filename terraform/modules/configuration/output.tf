@@ -12,6 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-output "configuration" {
-  value = var.eco_config_file != "" ? var.eco_config_file : local.configuration
+output "eco_configuration" {
+  value = var.eco_config_file != "" ? var.eco_config_file : local.eco_configuration
+}
+
+output "telegraf_configuration" {
+  value = var.telegraf_config_file != "" ? var.telegraf_config_file : local.telegraf_configuration
 }

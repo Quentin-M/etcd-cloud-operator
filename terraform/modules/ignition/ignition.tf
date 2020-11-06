@@ -20,6 +20,7 @@ data "ignition_config" "main" {
     data.ignition_file.eco-key.rendered,
     data.ignition_file.eco-health.rendered,
     data.ignition_file.e.rendered,
+    data.ignition_file.telegraf-config.rendered,
   ]
 
   systemd = [

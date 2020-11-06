@@ -38,6 +38,11 @@ variable "eco_image" {
   default     = "quay.io/quentin_m/etcd-cloud-operator:v3.4.13"
 }
 
+variable "telegraf_image" {
+  description = "Container image of Telegraf to use"
+  default     = "telegraf:1.15.3"
+}
+
 variable "eco_enable_tls" {
   description = "Defines whether etcd should expect TLS clients connections"
   default     = "true"
@@ -201,6 +206,7 @@ module "ignition" {
   instance_ssh_keys = var.instance_ssh_keys
 
   eco_image         = var.eco_image
+  telegraf_image    = var.telegraf_image
   eco_configuration = module.configuration.eco_configuration
   telegraf_configuration = module.configuration.telegraf_configuration
 

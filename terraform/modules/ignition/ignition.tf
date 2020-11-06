@@ -77,6 +77,14 @@ data "template_file" "eco-service" {
   }
 }
 
+data "template_file" "telegraf-service" {
+  template = file("${path.module}/resources/telegraf.service")
+
+  vars = {
+    image = var.telegraf_image
+  }
+}
+
 data "ignition_systemd_unit" "eco" {
   name    = "eco.service"
   content = data.template_file.eco-service.rendered
@@ -94,7 +102,7 @@ data "ignition_systemd_unit" "node-exporter" {
 
 data "ignition_systemd_unit" "telegraf" {
   name    = "telegraf.service"
-  content = file("${path.module}/resources/telegraf.service")
+  content = data.template_file.telegraf-service.rendered
 }
 
 data "ignition_file" "telegraf-config" {

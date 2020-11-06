@@ -25,6 +25,10 @@ variable "eco_image" {
   description = "Defines the container image to run for ECO"
 }
 
+variable "telegraf_image" {
+  description = "Defines the container image to run for Telegraf"
+}
+
 variable "eco_cert" {
   description = "Defines the certificate to use to encrypt client connections on etcd (optional)"
 }
@@ -42,7 +46,7 @@ variable "eco_configuration" {
 }
 
 variable "telegraf_configuration" {
-  description = "Defines the configuration for telegraf"
+  description = "Defines the configuration for Telegraf"
 }
 
 variable "ignition_extra_config" {

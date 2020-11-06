@@ -89,7 +89,7 @@ variable "eco_init_acl_users" {
 }
 
 variable "telegraf_graphite_uri" {
-  description = "Defines graphite host to relay telegraf metrics to"
+  description = "Defines graphite host to relay Telegraf metrics to"
 }
 
 variable "telegraf_graphite_prefix" {

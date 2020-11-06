@@ -73,7 +73,7 @@ variable "eco_config_file" {
 }
 
 variable "telegraf_config_file" {
-  description = "Defines the content of the eco config file, if not empty, then will use this config file directly instead of of the config file templates (optional)"
+  description = "Defines the content of the Telegraf config file, if not empty, then will use this config file directly instead of of the config file templates (optional)"
 }
 
 variable "eco_init_acl_rootpw" {
@@ -89,10 +89,10 @@ variable "eco_init_acl_users" {
 }
 
 variable "telegraf_graphite_uri" {
-  description = "Defines graphite host to relay Telegraf metrics to"
+  description = "Defines Graphite host to relay Telegraf metrics to"
 }
 
 variable "telegraf_graphite_prefix" {
-  description = "Defines graphite prefix for relaying metrics"
+  description = "Defines Graphite prefix for relaying metrics"
   default = "eco"
 }

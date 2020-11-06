@@ -68,14 +68,12 @@ eco:
     ttl: ${var.eco_snapshot_ttl}
     bucket: ${var.eco_snapshot_bucket}
 EOT
-   telegraf_configuration = <<EOT
+  telegraf_configuration = <<EOT
 [inputs.prometheus]
 ## An array of urls to scrape metrics from.
 urls = ["http://localhost:2381/metrics"]
 metric_version = 2
-[outputs.graphite]
-graphite_tag_support = true
-prefix = "${var.telegraf_graphite_prefix}"
-servers = ["${var.telegraf_graphite_uri}"]
+
+${var.telegraf_outputs_config}
 EOT
 }

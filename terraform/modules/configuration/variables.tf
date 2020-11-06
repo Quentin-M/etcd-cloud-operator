@@ -73,7 +73,11 @@ variable "eco_config_file" {
 }
 
 variable "telegraf_config_file" {
-  description = "Defines the content of the Telegraf config file"
+  description = "Defines the content of the Telegraf config file (To define only outputs use telegraf_outputs_config)"
+}
+
+variable "telegraf_outputs_config" {
+  description = "Defines output(s) to append to default Telegraf config"
 }
 
 variable "eco_init_acl_rootpw" {
@@ -86,13 +90,4 @@ variable "eco_init_acl_roles" {
 
 variable "eco_init_acl_users" {
   description = "Defines the list of ACL users for the etcd (optional)"
-}
-
-variable "telegraf_graphite_uri" {
-  description = "Defines Graphite host to relay Telegraf metrics to"
-}
-
-variable "telegraf_graphite_prefix" {
-  description = "Defines Graphite prefix for relaying metrics"
-  default = "eco"
 }

@@ -87,12 +87,3 @@ variable "extra_tags" {
   description = "Extra tags to associated with any AWS resources."
   default     = {}
 }
-
-variable "telegraf_graphite_uri" {
-  description = "Defines Graphite host to relay Telegraf metrics to"
-}
-
-variable "telegraf_graphite_prefix" {
-  description = "Defines Graphite prefix for relaying metrics"
-  default = "eco"
-}

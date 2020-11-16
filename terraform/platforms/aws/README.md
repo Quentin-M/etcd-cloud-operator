@@ -68,6 +68,8 @@ eco_backend_quota = "2147483648"
 # Defines the auto-compaction policy (set retention to 0 to disable).
 eco_auto_compaction_mode = "periodic"
 eco_auto_compaction_retention = "0"
+# Defines output(s) to append to default Telegraf config
+telegraf_outputs_config = ""
 ```
 
 Finally, let Terraform configure and create the infrastructure:

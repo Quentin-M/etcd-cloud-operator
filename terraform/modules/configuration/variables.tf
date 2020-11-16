@@ -72,6 +72,14 @@ variable "eco_config_file" {
   description = "Defines the content of the eco config file, if not empty, then will use this config file directly instead of of the config file templates (optional)"
 }
 
+variable "telegraf_config_file" {
+  description = "Defines the content of the Telegraf config file"
+}
+
+variable "telegraf_outputs_config" {
+  description = "Defines output(s) to append to default Telegraf config"
+}
+
 variable "eco_init_acl_rootpw" {
   description = "Defines the root passsword of the etcd (optional)"
 }

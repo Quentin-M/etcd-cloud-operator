@@ -20,6 +20,7 @@ data "ignition_config" "main" {
     data.ignition_file.eco-key.rendered,
     data.ignition_file.eco-health.rendered,
     data.ignition_file.e.rendered,
+    data.ignition_file.telegraf-config.rendered,
   ]
 
   systemd = [
@@ -29,6 +30,7 @@ data "ignition_config" "main" {
     data.ignition_systemd_unit.eco.rendered,
     data.ignition_systemd_unit.eco-health.rendered,
     data.ignition_systemd_unit.node-exporter.rendered,
+    data.ignition_systemd_unit.telegraf.rendered,
   ]
 
   users = [data.ignition_user.core.rendered]
@@ -75,6 +77,14 @@ data "template_file" "eco-service" {
   }
 }
 
+data "template_file" "telegraf-service" {
+  template = file("${path.module}/resources/telegraf.service")
+
+  vars = {
+    image = var.telegraf_image
+  }
+}
+
 data "ignition_systemd_unit" "eco" {
   name    = "eco.service"
   content = data.template_file.eco-service.rendered
@@ -88,6 +98,21 @@ data "ignition_systemd_unit" "eco-health" {
 data "ignition_systemd_unit" "node-exporter" {
   name    = "node-exporter.service"
   content = file("${path.module}/resources/node-exporter.service")
+}
+
+data "ignition_systemd_unit" "telegraf" {
+  name    = "telegraf.service"
+  content = data.template_file.telegraf-service.rendered
+}
+
+data "ignition_file" "telegraf-config" {
+  filesystem = "root"
+  path       = "/etc/telegraf/telegraf.conf"
+  mode       = 420
+
+  content {
+    content = var.telegraf_configuration
+  }
 }
 
 data "ignition_file" "eco-config" {

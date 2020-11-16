@@ -87,4 +87,3 @@ variable "extra_tags" {
   description = "Extra tags to associated with any AWS resources."
   default     = {}
 }
-

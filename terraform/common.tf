@@ -38,6 +38,11 @@ variable "eco_image" {
   default     = "quay.io/quentin_m/etcd-cloud-operator:v3.4.13"
 }
 
+variable "telegraf_image" {
+  description = "Container image of Telegraf to use"
+  default     = "telegraf:1.15.3"
+}
+
 variable "eco_enable_tls" {
   description = "Defines whether etcd should expect TLS clients connections"
   default     = "true"
@@ -87,7 +92,25 @@ variable "ca" {
 
 variable "eco_config_file" {
   description = "Defines the content of the eco config file, if not empty, then will use this config file directly instead of of the config file templates (optional)"
-  default = ""
+  default     = ""
+}
+
+variable "telegraf_config_file" {
+  description = "Defines the content of the Telegraf config file, if not empty, then it will use this config file (optional)"
+  default     = ""
+}
+
+// A telegraf outputs config
+// e.g.
+/*
+ [outputs.graphite]
+ graphite_tag_support = true
+ prefix = "telegraf"
+ servers = ["example.com:2003"]
+*/
+variable "telegraf_outputs_config" {
+  description = "Defines output(s) to append to default Telegraf config"
+  default     = "[[outputs.discard]]"
 }
 
 variable "eco_init_acl_rootpw" {
@@ -186,6 +209,8 @@ module "configuration" {
   eco_auto_compaction_mode      = var.eco_auto_compaction_mode
   eco_auto_compaction_retention = var.eco_auto_compaction_retention
   eco_config_file               = var.eco_config_file
+  telegraf_config_file          = var.telegraf_config_file
+  telegraf_outputs_config       = var.telegraf_outputs_config
 
   eco_init_acl_rootpw = var.eco_init_acl_rootpw
   eco_init_acl_roles  = var.eco_init_acl_roles
@@ -197,8 +222,10 @@ module "ignition" {
 
   instance_ssh_keys = var.instance_ssh_keys
 
-  eco_image         = var.eco_image
-  eco_configuration = module.configuration.configuration
+  eco_image              = var.eco_image
+  telegraf_image         = var.telegraf_image
+  eco_configuration      = module.configuration.eco_configuration
+  telegraf_configuration = module.configuration.telegraf_configuration
 
   eco_cert = module.tls.clients_server_cert
   eco_key  = module.tls.clients_server_key

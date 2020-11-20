@@ -20,7 +20,7 @@ resource "aws_elb" "clients" {
 
   security_groups = split(
     ",",
-    length(var.load_balancer_security_group_ids) > 0 ? join(",", var.load_balancer_security_group_ids) : aws_security_group.elb.id,
+    length(var.load_balancer_security_group_ids) > 0 ? join(",", concat([aws_security_group.instances.id], var.load_balancer_security_group_ids)) : aws_security_group.elb.id,
   )
 
   cross_zone_load_balancing = true

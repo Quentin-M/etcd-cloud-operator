@@ -101,51 +101,6 @@ resource "aws_security_group" "instances" {
   name   = "instances.${var.name}"
   vpc_id = var.vpc_id
 
-  ingress {
-    from_port = 2378
-    to_port   = 2378
-    protocol  = "tcp"
-    self      = true
-  }
-
-  ingress {
-    from_port       = 2379
-    to_port         = 2379
-    protocol        = "tcp"
-    security_groups = [aws_elb.clients.source_security_group_id]
-    self            = true
-  }
-
-  ingress {
-    from_port = 2380
-    to_port   = 2380
-    protocol  = "tcp"
-    self      = true
-  }
-
-  ingress {
-    from_port       = 2381
-    to_port         = 2381
-    protocol        = "tcp"
-    security_groups = var.metrics_security_group_ids
-    self            = true
-  }
-
-  ingress {
-    from_port       = 9100
-    to_port         = 9100
-    protocol        = "tcp"
-    security_groups = var.metrics_security_group_ids
-    self            = true
-  }
-
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
   tags = merge(
     {
       "Name"       = var.name
@@ -154,4 +109,70 @@ resource "aws_security_group" "instances" {
     var.extra_tags,
   )
 }
+
+resource "aws_security_group_rule" "instances_self_http" {
+  security_group_id = aws_security_group.instances.id
+  type              = "ingress"
+  from_port         = 2378
+  to_port           = 2378
+  protocol          = "tcp"
+  self              = true
+}
+
+resource "aws_security_group_rule" "instances_self_peer" {
+  security_group_id = aws_security_group.instances.id
+  type              = "ingress"
+  from_port         = 2380
+  to_port           = 2380
+  protocol          = "tcp"
+  self              = true
+}
+
+resource "aws_security_group_rule" "instances_self_clients" {
+  security_group_id = aws_security_group.instances.id
+  type              = "ingress"
+  from_port         = 2379
+  to_port           = 2379
+  protocol          = "tcp"
+  self              = true
+}
+
+resource "aws_security_group_rule" "instances_elb_clients" {
+  security_group_id        = aws_security_group.instances.id
+  type                     = "ingress"
+  from_port                = 2379
+  to_port                  = 2379
+  protocol                 = "tcp"
+  source_security_group_id = aws_security_group.elb.id
+}
+
+resource "aws_security_group_rule" "instances_metrics_etcd" {
+  count                    = length(var.metrics_security_group_ids)
+  security_group_id        = aws_security_group.instances.id
+  type                     = "ingress"
+  from_port                = 2381
+  to_port                  = 2381
+  protocol                 = "tcp"
+  source_security_group_id = var.metrics_security_group_ids[count.index]
+}
+
+resource "aws_security_group_rule" "instances_metrics_node_exporter" {
+  count                    = length(var.metrics_security_group_ids)
+  security_group_id        = aws_security_group.instances.id
+  type                     = "ingress"
+  from_port                = 9100
+  to_port                  = 9100
+  protocol                 = "tcp"
+  source_security_group_id = var.metrics_security_group_ids[count.index]
+}
+
+resource "aws_security_group_rule" "instances_egress" {
+  security_group_id = aws_security_group.instances.id
+  type              = "egress"
+  from_port         = 0
+  to_port           = 0
+  protocol          = "-1"
+  cidr_blocks       = ["0.0.0.0/0"]
+}
+
 

@@ -13,6 +13,10 @@
 // limitations under the License.
 
 variable "name" {
-  description = "Name of the deployment"
+  description = "Name of the network"
 }
 
+variable "cidr" {
+  description = "CIDR of the network"
+  default = "172.16.0.0/16"
+}

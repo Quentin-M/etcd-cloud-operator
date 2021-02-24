@@ -34,6 +34,8 @@ resource "tls_self_signed_cert" "ca" {
     organization = "etcd"
   }
 
+  dns_names = ["etcd"]
+
   allowed_uses = [
     "key_encipherment",
     "digital_signature",
@@ -72,6 +74,8 @@ resource "tls_cert_request" "clients-server" {
     common_name  = var.common_name
     organization = "etcd"
   }
+
+  dns_names = [var.common_name]
 }
 
 resource "tls_locally_signed_cert" "clients-server" {
@@ -113,6 +117,8 @@ resource "tls_cert_request" "clients" {
     common_name  = "etcd"
     organization = "etcd"
   }
+
+  dns_names = ["etcd"]
 }
 
 resource "tls_locally_signed_cert" "clients" {
@@ -153,6 +159,8 @@ resource "tls_cert_request" "acl_users" {
     common_name  = var.eco_init_acl_users[count.index].name
     organization = "etcd"
   }
+
+  dns_names = [var.eco_init_acl_users[count.index].name]
 }
 
 resource "tls_locally_signed_cert" "acl_users" {

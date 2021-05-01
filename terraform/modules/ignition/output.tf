@@ -28,3 +28,10 @@ output "eco_key_file" {
   value = "/etc/eco/eco.key"
 }
 
+output "eco_jwt_private_key_file" {
+  value = "/etc/eco/eco-jwt-key.private"
+}
+
+output "eco_jwt_public_key_file" {
+  value = "/etc/eco/eco-jwt-key.public"
+}

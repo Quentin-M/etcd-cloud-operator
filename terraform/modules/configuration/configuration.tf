@@ -60,6 +60,13 @@ eco:
 %{ endfor ~}
 %{ endfor ~}
 %{ endif ~}
+%{ if var.jwt_enabled ~}
+    jwt-auth-token-config:
+      sign-method: ${var.jwt_sign_method}
+      private-key-file: ${var.jwt_private_key_file}
+      public-key-file: ${var.jwt_public_key_file}
+      ttl: ${var.jwt_ttl}
+%{ endif ~}
   asg:
     provider: ${var.eco_asg_provider}
   snapshot:

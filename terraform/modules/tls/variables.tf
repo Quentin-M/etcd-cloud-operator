@@ -32,3 +32,8 @@ variable "generate_clients_cert" {
 variable "eco_init_acl_users" {
   description = "Defines the list of ACL users for the etcd (optional)"
 }
+
+variable "enable_jwt_token" {
+  description = "Defines whether or not to create private/public key pairs to verify jwt tokens"
+  default     = false
+}

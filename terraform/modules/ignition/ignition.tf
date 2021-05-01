@@ -13,7 +13,7 @@
 // limitations under the License.
 
 data "ignition_config" "main" {
-  files = [
+  files = concat([
     data.ignition_file.eco-config.rendered,
     data.ignition_file.eco-ca.rendered,
     data.ignition_file.eco-crt.rendered,
@@ -21,7 +21,10 @@ data "ignition_config" "main" {
     data.ignition_file.eco-health.rendered,
     data.ignition_file.e.rendered,
     data.ignition_file.telegraf-config.rendered,
-  ]
+    ], var.eco_jwt_enabled ? [
+    data.ignition_file.eco-jwt-private-key.rendered,
+    data.ignition_file.eco-jwt-public-key.rendered,
+  ] : [])
 
   systemd = [
     data.ignition_systemd_unit.docker.rendered,
@@ -172,6 +175,26 @@ data "ignition_file" "eco-health" {
 
   content {
     content = file("${path.module}/resources/eco-health.sh")
+  }
+}
+
+data "ignition_file" "eco-jwt-private-key" {
+  filesystem = "root"
+  path       = "/etc/eco/eco-jwt-key.private"
+  mode       = 420
+
+  content {
+    content = var.eco_jwt_private_key
+  }
+}
+
+data "ignition_file" "eco-jwt-public-key" {
+  filesystem = "root"
+  path       = "/etc/eco/eco-jwt-key.public"
+  mode       = 420
+
+  content {
+    content = var.eco_jwt_public_key
   }
 }
 

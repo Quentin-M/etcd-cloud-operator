@@ -62,6 +62,14 @@ eco:
         password: foo # Password is optional.
         roles:
         - range-example-role
+
+    # Configuration for the jwt auth token (optional).
+    jwt-auth-token-config:
+      sign-method: RS512 # Default to 'RS512', (optional).
+      private-key-file: /etc/eco/eco-jwt-key.private
+      public-key-file: /etc/eco/eco-jwt-key.public
+      ttl: 10m # Default to '10m', (optional).
+      
   # Configuration of the auto-scaling group provider.
   asg:
     provider: aws

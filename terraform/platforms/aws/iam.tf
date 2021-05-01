@@ -29,15 +29,15 @@ data "template_file" "policy" {
   template = file("${path.module}/policy.json")
 
   vars = {
-    bucket = aws_s3_bucket.backups.bucket
-    kms_arn = aws_kms_key.key.arn
+    bucket     = aws_s3_bucket.backups.bucket
+    kms_arn    = aws_kms_key.key.arn
     config_arn = "arn:aws:s3:::${aws_s3_bucket.config.id}/${aws_s3_bucket_object.ignition_config.id}"
   }
 }
 
 resource "aws_iam_role_policy" "instances" {
-  name = var.name
-  role = aws_iam_role.instances.id
+  name   = var.name
+  role   = aws_iam_role.instances.id
   policy = data.template_file.policy.rendered
 }
 

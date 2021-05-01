@@ -173,6 +173,20 @@ variable "eco_init_acl_users" {
   default = []
 }
 
+variable "enable_jwt_token" {
+  description = "Defines whether or not to create private/public key pairs to verify jwt tokens"
+  default     = false
+}
+
+variable "jwt_sign_method" {
+  description = "Defines the sign method of the jwt auth token (optional)"
+  default     = "RS512"
+}
+
+variable "jwt_ttl" {
+  description = "Defines the ttl of the jwt auth token(optional)"
+  default     = "10m"
+}
 
 // Modules.
 
@@ -185,6 +199,8 @@ module "tls" {
   generate_clients_cert = var.eco_require_client_certs
 
   eco_init_acl_users = var.eco_init_acl_users
+
+  enable_jwt_token = var.enable_jwt_token
 }
 
 module "configuration" {
@@ -215,6 +231,12 @@ module "configuration" {
   eco_init_acl_rootpw = var.eco_init_acl_rootpw
   eco_init_acl_roles  = var.eco_init_acl_roles
   eco_init_acl_users  = var.eco_init_acl_users
+
+  jwt_enabled          = var.enable_jwt_token
+  jwt_private_key_file = var.enable_jwt_token ? module.ignition.eco_jwt_private_key_file : ""
+  jwt_public_key_file  = var.enable_jwt_token ? module.ignition.eco_jwt_public_key_file : ""
+  jwt_sign_method      = var.jwt_sign_method
+  jwt_ttl              = var.jwt_ttl
 }
 
 module "ignition" {
@@ -232,6 +254,10 @@ module "ignition" {
   eco_ca   = module.tls.ca
 
   ignition_extra_config = var.ignition_extra_config
+
+  eco_jwt_enabled     = var.enable_jwt_token
+  eco_jwt_private_key = module.tls.jwt_private_key
+  eco_jwt_public_key  = module.tls.jwt_public_key
 }
 
 // Output.

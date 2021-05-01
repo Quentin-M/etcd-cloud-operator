@@ -182,3 +182,9 @@ resource "tls_locally_signed_cert" "acl_users" {
   }
 }
 
+resource "tls_private_key" "jwt_key" {
+  count = var.enabled == "true" && var.enable_jwt_token ? 1 : 0
+
+  algorithm = "RSA"
+  rsa_bits  = "2048"
+}

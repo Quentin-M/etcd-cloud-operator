@@ -53,3 +53,16 @@ variable "ignition_extra_config" {
   description = "Extra ignition configuration that will get appended to the default ECO config"
   default     = {}
 }
+
+variable "eco_jwt_private_key" {
+  description = "Defines the private key to use to sign the jwt auth token (optional)"
+}
+
+variable "eco_jwt_public_key" {
+  description = "Defines the private key to verify the jwt auth token (optional)"
+}
+
+variable "eco_jwt_enabled" {
+  description = "Defines whether the jwt auth token is enabled"
+  default     = false
+}

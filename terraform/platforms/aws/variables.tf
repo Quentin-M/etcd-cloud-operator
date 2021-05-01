@@ -48,7 +48,7 @@ variable "vpc_id" {
 
 variable "route53_prefix" {
   description = "Defines the primary dns prefix for the Route53 entry"
-  default = "etcd"
+  default     = "etcd"
 }
 
 variable "route53_enabled" {

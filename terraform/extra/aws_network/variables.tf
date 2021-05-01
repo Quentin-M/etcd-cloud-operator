@@ -18,5 +18,5 @@ variable "name" {
 
 variable "cidr" {
   description = "CIDR of the network"
-  default = "172.16.0.0/16"
+  default     = "172.16.0.0/16"
 }

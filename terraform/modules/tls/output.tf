@@ -39,3 +39,11 @@ output "acl_users_certs" {
 output "acl_users_keys" {
   value = var.enabled == "true" && var.generate_clients_cert == "true" ? tls_private_key.acl_users : []
 }
+
+output "jwt_private_key" {
+  value = var.enabled == "true" && var.enable_jwt_token ? join("", tls_private_key.jwt_key.*.private_key_pem) : ""
+}
+
+output "jwt_public_key" {
+  value = var.enabled == "true" && var.enable_jwt_token ? join("", tls_private_key.jwt_key.*.public_key_pem) : ""
+}

@@ -91,3 +91,24 @@ variable "eco_init_acl_roles" {
 variable "eco_init_acl_users" {
   description = "Defines the list of ACL users for the etcd (optional)"
 }
+
+variable "jwt_enabled" {
+  description = "Defines whether the jwt auth token is enabled"
+  default     = false
+}
+
+variable "jwt_sign_method" {
+  description = "Defines the sign method of the jwt auth token (optional)"
+}
+
+variable "jwt_private_key_file" {
+  description = "Defines the path to the private key to use to sign the jwt auth token (optional)"
+}
+
+variable "jwt_public_key_file" {
+  description = "Defines the path to the public key to verify the jwt auth token (optional)"
+}
+
+variable "jwt_ttl" {
+  description = "Defines the ttl of the jwt auth token(optional)"
+}

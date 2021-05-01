@@ -71,6 +71,9 @@ type ServerConfig struct {
 	// Internal, used in startServer.
 	clusterState string
 	initialPURLs map[string]string
+
+	// JWT Auth token config, it's for the etcd "--auth-token" flag.
+	JWTAuthTokenConfig *JWTAuthTokenConfig
 }
 
 func NewServer(cfg ServerConfig) *Server {
@@ -343,6 +346,14 @@ func (c *Server) startServer(ctx context.Context) error {
 	etcdCfg.AutoCompactionRetention = c.cfg.AutoCompactionRetention
 	etcdCfg.ZapLoggerBuilder = logger.BuildZapConfigBuilder()
 	etcdCfg.LogLevel = logger.GetZapLogLevelFromLogrus().String()
+
+	if c.cfg.JWTAuthTokenConfig != nil {
+		etcdCfg.AuthToken = fmt.Sprintf("jwt,priv-key=%s,pub-key=%s,sign-method=%s,ttl=%s",
+			c.cfg.JWTAuthTokenConfig.PrivateKeyFile,
+			c.cfg.JWTAuthTokenConfig.PublicKeyFile,
+			c.cfg.JWTAuthTokenConfig.SignMethod,
+			c.cfg.JWTAuthTokenConfig.TTL)
+	}
 
 	// Start the server.
 	c.server, err = embed.StartEtcd(etcdCfg)

@@ -40,14 +40,15 @@ const (
 // EtcdConfiguration contains the configuration related to the underlying etcd
 // server.
 type EtcdConfiguration struct {
-	AdvertiseAddress        string         `yaml:"advertise-address"`
-	DataDir                 string         `yaml:"data-dir"`
-	ClientTransportSecurity SecurityConfig `yaml:"client-transport-security"`
-	PeerTransportSecurity   SecurityConfig `yaml:"peer-transport-security"`
-	BackendQuota            int64          `yaml:"backend-quota"`
-	AutoCompactionMode      string         `yaml:"auto-compaction-mode"`
-	AutoCompactionRetention string         `yaml:"auto-compaction-retention"`
-	InitACL                 *ACLConfig     `yaml:"init-acl,omitempty"`
+	AdvertiseAddress        string              `yaml:"advertise-address"`
+	DataDir                 string              `yaml:"data-dir"`
+	ClientTransportSecurity SecurityConfig      `yaml:"client-transport-security"`
+	PeerTransportSecurity   SecurityConfig      `yaml:"peer-transport-security"`
+	BackendQuota            int64               `yaml:"backend-quota"`
+	AutoCompactionMode      string              `yaml:"auto-compaction-mode"`
+	AutoCompactionRetention string              `yaml:"auto-compaction-retention"`
+	InitACL                 *ACLConfig          `yaml:"init-acl,omitempty"`
+	JWTAuthTokenConfig      *JWTAuthTokenConfig `yaml:"jwt-auth-token-config,omitempty"`
 }
 
 type SecurityConfig struct {
@@ -65,6 +66,14 @@ type ACLConfig struct {
 	RootPassword *string `yaml:"rootPassword,omitempty"`
 	Roles        []Role  `yaml:"roles"`
 	Users        []User  `yaml:"users"`
+}
+
+// JWTAuthTokenConfig defines the config for the JWT auth token.
+type JWTAuthTokenConfig struct {
+	SignMethod     string `yaml:"sign-method"`
+	PrivateKeyFile string `yaml:"private-key-file"`
+	PublicKeyFile  string `yaml:"public-key-file"`
+	TTL            string `yaml:"ttl"`
 }
 
 // Role defines an etcd ACL role with its permissions.

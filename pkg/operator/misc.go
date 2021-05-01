@@ -153,6 +153,7 @@ func serverConfig(cfg Config, asgSelf asg.Instance, snapshotProvider snapshot.Pr
 		SnapshotProvider:        snapshotProvider,
 		SnapshotInterval:        cfg.Snapshot.Interval,
 		SnapshotTTL:             cfg.Snapshot.TTL,
+		JWTAuthTokenConfig:      cfg.Etcd.JWTAuthTokenConfig,
 	}
 }
 

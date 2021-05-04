@@ -39,6 +39,13 @@ failures.
 -   _ACL support_: A user can configure the ACL of etcd by providing an **init-acl** config
     in the config file. See [init-acl.md](./docs/init-acl.md) for more information.
 
+-   _JWT auth token support_: JWT auth token can be enabled by specifying the
+    `jwt-auth-token-config` in the config file, similar to the etcd [-auth-token](https://etcd.io/docs/v3.3/op-guide/configuration/#--auth-token)
+    flag.
+    The JWT auth token is **HIGHLY** recommended for [production deployment](https://etcd.io/docs/v3.2/learning/auth_design/#two-types-of-tokens-simple-and-jwt),
+    especially when the **init-acl** config is also enabled, the JWT auth token can help
+    avoid the potential [invalid auth token issue](https://github.com/etcd-io/etcd/issues/9629).
+
 The operator and etcd cluster can be easily configured using a [YAML file]. The
 configuration notably includes clients/peers TLS encryption/authentication, with
 the ability to automatically generate self-signed certificates if encryption

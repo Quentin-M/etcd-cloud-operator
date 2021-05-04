@@ -46,3 +46,11 @@ Allows the `read` permission on paths from `/foo1` to `/foo5`.
 The `users` section defines a list of users, each user can be assigned to multiple roles.
 Optionally, a password can be also set for the user.
 Without a password, etcd will checks the client's TLS cert and use the `CommonName (CN)` to authenticate the user.
+
+
+### JWT Auth Token
+
+It's **HIGHLY** recommended to enable the **JWT Auth Token** when the etcd authentication is turned on (e.g. when the **init-acl** config is set).
+The JWT token can help avoid the potential [invalid auth token issue](https://github.com/etcd-io/etcd/issues/9629), which would require an etcd reboot to fix it.
+See the [README](../README.md) or the [example config](../config.example.yaml) to find out how to configure the **JWT Auth Token**.
+More details about the JWT token v.s. simple token can be found [here](https://etcd.io/docs/v3.2/learning/auth_design/#two-types-of-tokens-simple-and-jwt).

@@ -1,44 +1,33 @@
 ---
-replicaCount: 3
+
 image:
+  repository: quay.io/quentin_m/etcd-cloud-operator
   pullPolicy: IfNotPresent
+
+replicaCount: 3
 service:
   type: ClusterIP
 
-# Used by the Pod disruption budget
-maxUnavailable: 30%
-
-setupProbe:
-  failureThreshold: 30
-  periodSeconds: 10
-
 persistence:
-  enabled: false
-  ## A manually managed Persistent Volume and Claim
-  ## If defined, persistence must be enabled and
-  ## PVC must be created manually before volume will be bound
-  #  existingClaim:
-  ## Name of the storage class to use when requesting the volume
-  storageClass: "hostpath"
+  enabled: true
+  storageClass: "standard"
   accessModes:
    - ReadWriteOnce
-  size: 1Gi
+  size: 4Gi
   annotations: {}
 
 networkPolicy:
-  ## Enable creation of NetworkPolicy resources.
-  enabled: false
-  ## The Policy model to apply. When set to false, only pods with the correct
-  ## client label will have network access to the port PostgreSQL is listening
-  ## on. When true, ETCD will accept connections from any source
-  ## (with the correct destination port).
-  ##
+  enabled: true
   allowExternal: true
 
-# Eco configuration, see config.example.yaml for option details
+setupProbe:
+  failureThreshold: 60
+  periodSeconds: 10
+
+# ECO configuration, see config.example.yaml for option details
 config:
   checkInterval: 15s
-  unhealthyMemberTTL: 30s
+  unhealthyMemberTTL: 5m
   autoDisasterRecovery: true
   etcd:
     dataDir: /var/lib/etcd
@@ -56,7 +45,7 @@ config:
       peerClientCertAuth: ""
     backendQuota: "2147483648"
   snapshot:
-    provider: file
+    provider: file # This should be configured to S3 in any real environments.
     interval: 30m
     ttl: 24h
 

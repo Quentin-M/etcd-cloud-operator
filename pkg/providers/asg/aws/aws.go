@@ -47,6 +47,10 @@ func (i *instance) Address() string {
 	return i.address
 }
 
+func (i *instance) BindAddress() string {
+	return i.address
+}
+
 func (a *aws) Configure(providerConfig asg.Config) error {
 	// Fetch the underlying auto-scaling group once to verify the app is
 	// indeed running on one, and cache its name.

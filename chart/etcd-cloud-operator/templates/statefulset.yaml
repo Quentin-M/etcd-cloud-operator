@@ -38,6 +38,22 @@ spec:
             mountPath: /etc/eco
             readOnly: true
           env:
+          - name: ETCD_API
+            value: "3"
+          - name: ETCDCTL_INSECURE_SKIP_TLS_VERIFY
+            value: "true"
+          {{- if .Values.config.etcd.clientTransportSecurity.trustedCaFile }}
+          - name: ETCDCTL_CACERT
+            value: {{ .Values.config.etcd.clientTransportSecurity.trustedCaFile }}
+          {{- end }}
+          {{- if .Values.config.etcd.clientTransportSecurity.certFile }}
+          - name: ETCDCTL_CERT
+            value: {{ .Values.config.etcd.clientTransportSecurity.certFile }}
+          {{- end }}
+          {{- if .Values.config.etcd.clientTransportSecurity.keyFile }}
+          - name: ETCDCTL_KEY
+            value: {{ .Values.config.etcd.clientTransportSecurity.keyFile }}
+          {{- end }}
           - name: STATEFULSET_SERVICE_NAME
             value: {{ include "etcd-cloud-operator.fullname" . }}
           - name: STATEFULSET_NAME
@@ -74,6 +90,14 @@ spec:
               port: http
             initialDelaySeconds: 10
             periodSeconds: 30
+          startupProbe:
+            exec:
+              command:
+              - /bin/sh
+              - -c
+              - /usr/local/bin/etcdctl --endpoints=${POD_IP}:2379 endpoint health
+            failureThreshold: {{ .Values.setupProbe.failureThreshold }}
+            periodSeconds: {{ .Values.setupProbe.periodSeconds }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
       volumes:

@@ -8,6 +8,10 @@ service:
 # Used by the Pod disruption budget
 maxUnavailable: 30%
 
+setupProbe:
+  failureThreshold: 30
+  periodSeconds: 10
+
 persistence:
   enabled: false
   ## A manually managed Persistent Volume and Claim

@@ -55,6 +55,7 @@ type ServerConfig struct {
 	Name                    string
 	DataDir                 string
 	DataQuota               int64
+	BindAddress             string
 	PublicAddress           string
 	PrivateAddress          string
 	ClientSC                SecurityConfig
@@ -335,18 +336,17 @@ func (c *Server) startServer(ctx context.Context) error {
 	etcdCfg.ClientAutoTLS = c.cfg.ClientSC.AutoTLS
 	etcdCfg.ClientTLSInfo = c.cfg.ClientSC.TLSInfo()
 	etcdCfg.InitialCluster = initialCluster(c.cfg.initialPURLs)
-	etcdCfg.LPUrls, _ = types.NewURLs([]string{peerURL(c.cfg.PrivateAddress, c.cfg.PeerSC.TLSEnabled())})
+	etcdCfg.LPUrls, _ = types.NewURLs([]string{peerURL(c.cfg.BindAddress, c.cfg.PeerSC.TLSEnabled())})
 	etcdCfg.APUrls, _ = types.NewURLs([]string{peerURL(c.cfg.PrivateAddress, c.cfg.PeerSC.TLSEnabled())})
-	etcdCfg.LCUrls, _ = types.NewURLs([]string{ClientURL(c.cfg.PrivateAddress, c.cfg.ClientSC.TLSEnabled())})
+	etcdCfg.LCUrls, _ = types.NewURLs([]string{ClientURL(c.cfg.BindAddress, c.cfg.ClientSC.TLSEnabled())})
 	etcdCfg.ACUrls, _ = types.NewURLs([]string{ClientURL(c.cfg.PublicAddress, c.cfg.ClientSC.TLSEnabled())})
-	etcdCfg.ListenMetricsUrls = append(metricsURLs(c.cfg.PrivateAddress), metricsURLs("127.0.0.1")...)
+	etcdCfg.ListenMetricsUrls = append(metricsURLs(c.cfg.BindAddress), metricsURLs("127.0.0.1")...)
 	etcdCfg.Metrics = "extensive"
 	etcdCfg.QuotaBackendBytes = c.cfg.DataQuota
 	etcdCfg.AutoCompactionMode = c.cfg.AutoCompactionMode
 	etcdCfg.AutoCompactionRetention = c.cfg.AutoCompactionRetention
 	etcdCfg.ZapLoggerBuilder = logger.BuildZapConfigBuilder()
 	etcdCfg.LogLevel = logger.GetZapLogLevelFromLogrus().String()
-
 	if c.cfg.JWTAuthTokenConfig != nil {
 		etcdCfg.AuthToken = fmt.Sprintf("jwt,priv-key=%s,pub-key=%s,sign-method=%s,ttl=%s",
 			c.cfg.JWTAuthTokenConfig.PrivateKeyFile,

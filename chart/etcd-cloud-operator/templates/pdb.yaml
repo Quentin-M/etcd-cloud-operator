@@ -3,7 +3,7 @@ kind: PodDisruptionBudget
 metadata:
   name: {{ include "etcd-cloud-operator.fullname" . }}
 spec:
-  maxUnavailable: {{ .Values.maxUnavailable }}
+  minAvailable: 60%
   selector:
     matchLabels:
       app.kubernetes.io/name: {{ include "etcd-cloud-operator.name" . }}

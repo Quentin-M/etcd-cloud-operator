@@ -34,6 +34,5 @@ COPY --from=builder /go/bin/operator /operator
 COPY --from=builder /go/bin/tester /tester
 COPY --from=builder /etcd/etcdctl /usr/local/bin/etcdctl
 
-
 ENTRYPOINT ["/operator"]
 CMD ["-config", "/etc/eco/eco.yaml"]

@@ -23,12 +23,11 @@ import (
 	"sync"
 	"time"
 
-	"go.etcd.io/etcd/clientv3"
-	etcdcl "go.etcd.io/etcd/clientv3"
-	concurrency "go.etcd.io/etcd/clientv3/concurrency"
-	"go.etcd.io/etcd/etcdserver/api/v3rpc/rpctypes"
-	"go.etcd.io/etcd/etcdserver/etcdserverpb"
-	"go.etcd.io/etcd/mvcc"
+	"go.etcd.io/etcd/api/v3/etcdserverpb"
+	"go.etcd.io/etcd/api/v3/v3rpc/rpctypes"
+	"go.etcd.io/etcd/client/v3"
+	"go.etcd.io/etcd/client/v3/concurrency"
+	"go.etcd.io/etcd/server/v3/mvcc"
 
 	"github.com/quentin-m/etcd-cloud-operator/pkg/logger"
 )
@@ -57,7 +56,7 @@ func NewClient(clientsAddresses []string, sc SecurityConfig, autoSync bool) (*Cl
 		autoSyncInterval = defaultAutoSync
 	}
 
-	client, err := etcdcl.New(etcdcl.Config{
+	client, err := clientv3.New(clientv3.Config{
 		Endpoints:        ClientsURLs(clientsAddresses, sc.TLSEnabled()),
 		DialTimeout:      defaultDialTimeout,
 		TLS:              tc,

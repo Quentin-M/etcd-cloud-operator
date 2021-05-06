@@ -348,6 +348,10 @@ func (c *Server) startServer(ctx context.Context) error {
 	etcdCfg.AutoCompactionRetention = c.cfg.AutoCompactionRetention
 	etcdCfg.ZapLoggerBuilder = logger.BuildZapConfigBuilder()
 	etcdCfg.LogLevel = logger.GetZapLogLevelFromLogrus().String()
+	etcdCfg.SocketOpts = transport.SocketOpts{
+		ReusePort:    true,
+		ReuseAddress: true,
+	}
 	if c.cfg.JWTAuthTokenConfig != nil {
 		etcdCfg.AuthToken = fmt.Sprintf("jwt,priv-key=%s,pub-key=%s,sign-method=%s,ttl=%s",
 			c.cfg.JWTAuthTokenConfig.PrivateKeyFile,

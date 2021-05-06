@@ -24,7 +24,7 @@ import (
 	"time"
 
 	"github.com/quentin-m/etcd-cloud-operator/pkg/providers/snapshot"
-	"go.etcd.io/etcd/pkg/transport"
+	"go.etcd.io/etcd/client/pkg/v3/transport"
 )
 
 const (

@@ -26,6 +26,7 @@ var (
 type Instance interface {
 	Name() string
 	Address() string
+	BindAddress() string
 }
 
 type Provider interface {

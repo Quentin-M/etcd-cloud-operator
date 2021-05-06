@@ -32,6 +32,10 @@ func (c *container) Address() string {
 	return c.address
 }
 
+func (i *container) BindAddress() string {
+	return i.address
+}
+
 func containerList(namePattern string) ([]string, error) {
 	out, err := exec.Command("docker", "ps", fmt.Sprintf("--filter=name=%s", namePattern), "--format={{ .Names }}").CombinedOutput()
 	if err != nil {
@@ -41,7 +45,7 @@ func containerList(namePattern string) ([]string, error) {
 }
 
 func containerInspect(name string) (*container, error) {
-	out, err := exec.Command("docker", "inspect", "--format={{ .ID}},{{ .Name }},{{ .NetworkSettings.IPAddress }}", name).CombinedOutput()
+	out, err := exec.Command("docker", "inspect", `--format={{ .ID}},{{ .Name }},{{range $k, $v := .NetworkSettings.Networks}}{{printf "%s" $v.IPAddress}}{{end}}`, name).CombinedOutput()
 	if err != nil {
 		return nil, fmt.Errorf("failed to inspect container %q: %s", name, bytesToTrimmedString(out))
 	}

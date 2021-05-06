@@ -1,0 +1,23 @@
+eco:
+  check-interval: 5s
+  unhealthy-member-ttl: 30s
+  auto-disaster-recovery: true
+  etcd:
+    advertise-address:
+    data-dir: /var/lib/etcd
+    client-transport-security:
+      auto-tls: false
+      client-cert-auth: false
+    peer-transport-security:
+      auto-tls: true
+      peer-client-cert-auth: false
+    auto-compaction-mode: periodic
+    auto-compaction-retention: "0"
+  asg:
+    provider: docker
+    size: 3
+    name-filter: eco-
+  snapshot:
+    provider: file
+    interval: 5m
+    ttl: 60m

@@ -23,8 +23,8 @@ import (
 
 	"golang.org/x/time/rate"
 
-	"go.etcd.io/etcd/clientv3"
-	pb "go.etcd.io/etcd/etcdserver/etcdserverpb"
+	"go.etcd.io/etcd/client/v3"
+	pb "go.etcd.io/etcd/api/v3/etcdserverpb"
 )
 
 const (

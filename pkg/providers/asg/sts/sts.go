@@ -15,29 +15,29 @@
 package sts
 
 import (
+	"errors"
 	"fmt"
 	"os"
+	"strconv"
+	"strings"
 
 	"github.com/quentin-m/etcd-cloud-operator/pkg/providers/asg"
 	log "github.com/sirupsen/logrus"
-	v1 "k8s.io/api/apps/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/rest"
 )
-
-var i instance
 
 func init() {
 	asg.Register("sts", &sts{})
 }
 
 type sts struct {
-	name, namespace string
+	namespace, name, serviceName, dnsClusterSuffix string
+	replicas int
+
+	self instance
 }
 
 type instance struct {
-	id, name, address string
+	id, name, address, bindAddress string
 }
 
 func (i *instance) Name() string {
@@ -48,78 +48,65 @@ func (i *instance) Address() string {
 	return i.address
 }
 
+func (i *instance) BindAddress() string {
+	return "0.0.0.0"
+}
+
 func (a *sts) Configure(providerConfig asg.Config) (err error) {
-	a.name, err = envOrErr("STATEFULSET_NAME")
-	if err != nil {
-		return
-	}
 	a.namespace, err = envOrErr("STATEFULSET_NAMESPACE")
 	if err != nil {
 		return
 	}
 
-	i.name, err = envOrErr("HOSTNAME")
+	a.name, err = envOrErr("STATEFULSET_NAME")
 	if err != nil {
 		return
 	}
 
-	i.address, err = envOrErr("POD_IP")
+	a.serviceName, err = envOrErr("STATEFULSET_SERVICE_NAME")
+	if err != nil {
+		return
+	}
 
+	a.dnsClusterSuffix, err = envOrErr("STATEFULSET_DNS_CLUSTER_SUFFIX")
+	if err != nil {
+		return
+	}
+
+	replicas, err := envOrErr("STATEFULSET_REPLICAS")
+	if err != nil {
+		return
+	}
+	a.replicas, err = strconv.Atoi(replicas)
+	if err != nil {
+		return errors.New("STATEFULSET_REPLICAS should be an integer")
+	}
+
+	a.self.name, err = envOrErr("HOSTNAME")
+	if err != nil {
+		return
+	}
+	a.self.address = fmt.Sprintf("%s.%s.%s.svc.%s", a.self.name, a.serviceName, a.namespace, a.dnsClusterSuffix)
+
+	log.Debugf("Running as %s within Statefulset %s of %d replicas, with headless service %s.%s.svc.%s", a.self.address, a.name, a.replicas, a.serviceName, a.namespace, a.dnsClusterSuffix)
 	return
 }
 
-func (a *sts) AutoScalingGroupStatus() (instances []asg.Instance, self asg.Instance, size int, err error) {
-	config, err := rest.InClusterConfig()
-	if err != nil {
-		return
+func (a *sts) AutoScalingGroupStatus() ([]asg.Instance, asg.Instance, int, error) {
+	instances := make([]asg.Instance, 0, a.replicas)
+	instancesStr := make([]string, 0, a.replicas)
+
+	for i:=0; i<a.replicas; i++ {
+		instance := instance{
+			name: fmt.Sprintf("%s-%d", a.name, i),
+			address: fmt.Sprintf("%s-%d.%s.%s.svc.%s", a.name, i, a.serviceName, a.namespace, a.dnsClusterSuffix),
+		}
+		instances = append(instances, &instance)
+		instancesStr = append(instancesStr, instance.address)
 	}
+	log.Debugf("Discovered %d / %d replicas: %s", len(instances), a.replicas, strings.Join(instancesStr, ", "))
 
-	cs, err := kubernetes.NewForConfig(config)
-	if err != nil {
-		return
-	}
-
-	log.Debugf("Running in pod: %s owned by statefulset: %s in namespace: %s with ip: %s",
-		i.name, a.name, a.namespace, i.address)
-
-	self = &i
-
-	s, err := cs.AppsV1().StatefulSets(a.namespace).Get(a.name, metav1.GetOptions{})
-	if err != nil {
-		log.Errorf("There was an error retrieving statefulset: %s", err)
-		return
-	}
-
-	size = int(*s.Spec.Replicas)
-	log.Debugf("Determined desired cluster size: %v", size)
-
-	instances, err = getInstancesFromStatefulSet(s, cs, a.namespace, a.name)
-	if err != nil {
-		log.Errorf("There was a problem getting instances from the statefulset: %s", err)
-	}
-
-	log.Debugf("Instances: %+v, Self: %+v, Size: %v", instances, self, size)
-
-	return
-}
-
-func getInstancesFromStatefulSet(s *v1.StatefulSet, cs *kubernetes.Clientset, namespace, name string) (instances []asg.Instance, err error) {
-	selector, err := metav1.LabelSelectorAsSelector(s.Spec.Selector)
-	if err != nil {
-		return
-	}
-
-	replicas, err := cs.CoreV1().Pods(namespace).List(metav1.ListOptions{LabelSelector: selector.String()})
-	if err != nil {
-		return
-	}
-
-	for _, r := range replicas.Items {
-		log.Debugf("Identified peer %s at IP: %s", r.Name, r.Status.PodIP)
-		instances = append(instances, &instance{name: r.Name, address: r.Status.PodIP})
-	}
-
-	return
+	return instances, &a.self, a.replicas, nil
 }
 
 func envOrErr(key string) (value string, err error) {

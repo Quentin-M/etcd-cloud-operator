@@ -24,12 +24,12 @@ import (
 	"time"
 
 	log "github.com/sirupsen/logrus"
-	etcdcl "go.etcd.io/etcd/clientv3"
-	etcdsnap "go.etcd.io/etcd/clientv3/snapshot"
 	"go.uber.org/zap"
 
-	"go.etcd.io/etcd/embed"
-	"go.etcd.io/etcd/pkg/types"
+	"go.etcd.io/etcd/client/pkg/v3/transport"
+	"go.etcd.io/etcd/client/pkg/v3/types"
+	etcdsnap "go.etcd.io/etcd/etcdctl/v3/snapshot"
+	"go.etcd.io/etcd/server/v3/embed"
 	"google.golang.org/grpc/grpclog"
 
 	"github.com/quentin-m/etcd-cloud-operator/pkg/logger"
@@ -55,6 +55,7 @@ type ServerConfig struct {
 	Name                    string
 	DataDir                 string
 	DataQuota               int64
+	BindAddress             string
 	PublicAddress           string
 	PrivateAddress          string
 	ClientSC                SecurityConfig
@@ -334,19 +335,23 @@ func (c *Server) startServer(ctx context.Context) error {
 	etcdCfg.PeerTLSInfo = c.cfg.PeerSC.TLSInfo()
 	etcdCfg.ClientAutoTLS = c.cfg.ClientSC.AutoTLS
 	etcdCfg.ClientTLSInfo = c.cfg.ClientSC.TLSInfo()
+	etcdCfg.SelfSignedCertValidity = 5
 	etcdCfg.InitialCluster = initialCluster(c.cfg.initialPURLs)
-	etcdCfg.LPUrls, _ = types.NewURLs([]string{peerURL(c.cfg.PrivateAddress, c.cfg.PeerSC.TLSEnabled())})
+	etcdCfg.LPUrls, _ = types.NewURLs([]string{peerURL(c.cfg.BindAddress, c.cfg.PeerSC.TLSEnabled())})
 	etcdCfg.APUrls, _ = types.NewURLs([]string{peerURL(c.cfg.PrivateAddress, c.cfg.PeerSC.TLSEnabled())})
-	etcdCfg.LCUrls, _ = types.NewURLs([]string{ClientURL(c.cfg.PrivateAddress, c.cfg.ClientSC.TLSEnabled())})
+	etcdCfg.LCUrls, _ = types.NewURLs([]string{ClientURL(c.cfg.BindAddress, c.cfg.ClientSC.TLSEnabled())})
 	etcdCfg.ACUrls, _ = types.NewURLs([]string{ClientURL(c.cfg.PublicAddress, c.cfg.ClientSC.TLSEnabled())})
-	etcdCfg.ListenMetricsUrls = append(metricsURLs(c.cfg.PrivateAddress), metricsURLs("127.0.0.1")...)
+	etcdCfg.ListenMetricsUrls = append(metricsURLs(c.cfg.BindAddress), metricsURLs("127.0.0.1")...)
 	etcdCfg.Metrics = "extensive"
 	etcdCfg.QuotaBackendBytes = c.cfg.DataQuota
 	etcdCfg.AutoCompactionMode = c.cfg.AutoCompactionMode
 	etcdCfg.AutoCompactionRetention = c.cfg.AutoCompactionRetention
 	etcdCfg.ZapLoggerBuilder = logger.BuildZapConfigBuilder()
 	etcdCfg.LogLevel = logger.GetZapLogLevelFromLogrus().String()
-
+	etcdCfg.SocketOpts = transport.SocketOpts{
+		ReusePort:    true,
+		ReuseAddress: true,
+	}
 	if c.cfg.JWTAuthTokenConfig != nil {
 		etcdCfg.AuthToken = fmt.Sprintf("jwt,priv-key=%s,pub-key=%s,sign-method=%s,ttl=%s",
 			c.cfg.JWTAuthTokenConfig.PrivateKeyFile,
@@ -359,7 +364,7 @@ func (c *Server) startServer(ctx context.Context) error {
 	c.server, err = embed.StartEtcd(etcdCfg)
 
 	// Discard the gRPC logs, as the embed server will set that regardless of what was set before (i.e. at startup).
-	etcdcl.SetLogger(grpclog.NewLoggerV2(ioutil.Discard, ioutil.Discard, os.Stderr))
+	grpclog.SetLoggerV2(grpclog.NewLoggerV2(ioutil.Discard, ioutil.Discard, os.Stderr))
 
 	if err != nil {
 		return fmt.Errorf("failed to start etcd: %s", err)

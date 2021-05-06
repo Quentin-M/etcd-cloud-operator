@@ -121,20 +121,24 @@ func fetchStatuses(httpClient *http.Client, etcdClient *etcd.Client, asgInstance
 }
 
 func fetchStatus(httpClient *http.Client, instance asg.Instance) (*status, error) {
+	var st = status{
+		instance: instance,
+		State: "UNKNOWN",
+		Revision: 0,
+	}
+
 	resp, err := httpClient.Get(fmt.Sprintf("http://%s:%d/status", instance.Address(), webServerPort))
 	if err != nil {
-		return nil, err
+		return &st, err
 	}
 	defer resp.Body.Close()
 
 	b, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return nil, err
+		return &st, err
 	}
 
-	var st status
 	err = json.Unmarshal(b, &st)
-	st.instance = instance
 	return &st, err
 }
 
@@ -145,6 +149,7 @@ func serverConfig(cfg Config, asgSelf asg.Instance, snapshotProvider snapshot.Pr
 		DataQuota:               cfg.Etcd.BackendQuota,
 		AutoCompactionMode:      cfg.Etcd.AutoCompactionMode,
 		AutoCompactionRetention: cfg.Etcd.AutoCompactionRetention,
+		BindAddress:			 asgSelf.BindAddress(),
 		PublicAddress:           stringOverride(asgSelf.Address(), cfg.Etcd.AdvertiseAddress),
 		PrivateAddress:          asgSelf.Address(),
 		ClientSC:                cfg.Etcd.ClientTransportSecurity,

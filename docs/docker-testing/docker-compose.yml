@@ -1,0 +1,56 @@
+version: '3.1'
+
+networks:
+  eco:
+
+services:
+  eco-0:
+    build:
+      context: ../../
+      dockerfile: Dockerfile
+    command: ["-config=/etc/eco/eco.yaml", "-log-level=info"]
+    ports:
+      - 2378:2378
+      - 2379:2379
+      - 2380:2380
+      - 2381:2381
+    networks: [eco]
+    volumes:
+      - ./config.yaml:/etc/eco/eco.yaml
+      - ./data/eco-0:/var/lib
+      - /var/run/docker.sock:/var/run/docker.sock
+    privileged: true # required to inspect IP addresses
+
+  eco-1:
+    build:
+      context: ../../
+      dockerfile: Dockerfile
+    command: ["-config=/etc/eco/eco.yaml", "-log-level=info"]
+    ports:
+      - 2378
+      - 2379
+      - 2380
+      - 2381
+    networks: [eco]
+    volumes:
+      - ./config.yaml:/etc/eco/eco.yaml
+      - ./data/eco-1:/var/lib
+      - /var/run/docker.sock:/var/run/docker.sock
+    privileged: true # required to inspect IP addresses
+
+  eco-2:
+    build:
+      context: ../../
+      dockerfile: Dockerfile
+    command: ["-config=/etc/eco/eco.yaml", "-log-level=info"]
+    networks: [eco]
+    ports:
+      - 2378
+      - 2379
+      - 2380
+      - 2381
+    volumes:
+      - ./config.yaml:/etc/eco/eco.yaml
+      - ./data/eco-2:/var/lib
+      - /var/run/docker.sock:/var/run/docker.sock
+    privileged: true # required to inspect IP addresses

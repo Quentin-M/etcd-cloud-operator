@@ -29,7 +29,8 @@ RUN go install github.com/quentin-m/etcd-cloud-operator/cmd/tester
 # Copy ECO and etcdctl into an Alpine Linux container image.
 FROM alpine
 
-RUN apk add --no-cache ca-certificates
+RUN apk add --no-cache ca-certificates docker-cli
+RUN update-ca-certificates
 COPY --from=builder /go/bin/operator /operator
 COPY --from=builder /go/bin/tester /tester
 COPY --from=builder /etcd/etcdctl /usr/local/bin/etcdctl

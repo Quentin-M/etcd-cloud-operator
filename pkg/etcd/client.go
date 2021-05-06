@@ -28,6 +28,7 @@ import (
 	"go.etcd.io/etcd/client/v3"
 	"go.etcd.io/etcd/client/v3/concurrency"
 	"go.etcd.io/etcd/server/v3/mvcc"
+	"go.uber.org/zap"
 
 	"github.com/quentin-m/etcd-cloud-operator/pkg/logger"
 )
@@ -66,6 +67,7 @@ func NewClient(clientsAddresses []string, sc SecurityConfig, autoSync bool) (*Cl
 	if err != nil {
 		return nil, err
 	}
+	client.WithLogger(zap.L())
 
 	return &Client{
 		Client: client,

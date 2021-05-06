@@ -1,6 +1,6 @@
 # etcd-cloud-operator
 
-Maintained by a former CoreOS engineer and inspired from the [etcd-operator]
+Maintained by a former CoreOS engineer and inspired from the [etcd-operator](https://github.com/coreos/etcd-operator)
 designed for Kubernetes, the etcd-cloud-operator automatically bootstraps,
 monitors, snapshots and recovers etcd clusters on cloud providers.
 
@@ -40,37 +40,27 @@ failures.
     in the config file. See [init-acl.md](./docs/init-acl.md) for more information.
 
 -   _JWT auth token support_: JWT auth token can be enabled by specifying the
-    `jwt-auth-token-config` in the config file, similar to the etcd [-auth-token](https://etcd.io/docs/v3.3/op-guide/configuration/#--auth-token)
-    flag.
-    The JWT auth token is **HIGHLY** recommended for [production deployment](https://etcd.io/docs/v3.2/learning/auth_design/#two-types-of-tokens-simple-and-jwt),
+    `jwt-auth-token-config` in the config file, similar to the etcd 
+    [-auth-token](https://etcd.io/docs/v3.3/op-guide/configuration/#--auth-token) flag.
+    The JWT auth token is **HIGHLY** recommended for 
+    [production deployment](https://etcd.io/docs/v3.2/learning/auth_design/#two-types-of-tokens-simple-and-jwt),
     especially when the **init-acl** config is also enabled, the JWT auth token can help
     avoid the potential [invalid auth token issue](https://github.com/etcd-io/etcd/issues/9629).
 
-The operator and etcd cluster can be easily configured using a [YAML file]. The
+The operator and etcd cluster can be easily configured using a [YAML file](config.example.yaml). The
 configuration notably includes clients/peers TLS encryption/authentication, with
 the ability to automatically generate self-signed certificates if encryption
 is desired but authentication is not.
-
-A changelog is maintained at [CHANGELOG.md](CHANGELOG.md).
 
 ## How to try it?
 
 Running a managed etcd cluster using the operator is simply a matter of running
 the operator binary in a supported auto-scaling group (as of today, AWS and Kubernetes only).
 
--   _AWS_: You will need to provide IAM credentials with the following capabilities
-    in the container's environment, scoped to the appropriate instances:
-    "ec2:DescribeInstances"
-    "autoscaling:DescribeAutoScalingGroups"
-    "autoscaling:DescribeAutoScalingInstances"
+-   _Docker_: Head over to [docs/docker-testing](docs/docker-testing) for a single-line local 3-nodes deployment.
 
--   Kubernetes: You can run the etcd-cloud-operator in a statefulset, but you will need to provide a
-    few environment variables. See the [Readme](docs/kubernetes/README.md) for the `sts` provider.
-    The easiest way to get to going is to use the included `helm` [chart](chart/etcd-cloud-operator).
+-   _AWS_: A Terraform [module](terraform/platforms/aws) is available to easily bring up production-grade etcd clusters
+    managed by the operator within AWS.
 
-A Terraform [module] is available to easily bring up production-grade etcd clusters
-managed by the the operator out, and integrate them into your infrastructure.
-
-[etcd-operator]: https://github.com/coreos/etcd-operator
-[yaml file]: config.example.yaml
-[module]: terraform/platforms/aws
+-   _Kubernetes_: A basic [Helm chart](chart/etcd-cloud-operator) is available to quickly get started with a 3-nodes 
+    StatefulSet.

@@ -35,16 +35,14 @@ git clone https://github.com/Quentin-M/etcd-cloud-operator.git
 cd chart
 helm install etcd-cloud-operator
 ```
-This will install a basic 3 replica etcd cluster without persistent storage or client TLS. You can
+This will install a basic 3 replica etcd cluster with persistent storage but without client TLS. You can
 customize these settings using the variables available in the
 [values](../../chart/etcd-cloud-operator/values.yaml) file. These variables directly map to various
 configuration options for the operator.
 
 TODO List:
 
-* Add persistent volume support in helm chart
 * Add security context in helm chart
 * Add E2E Tests for Kubernetes
 * Support S3 Snapshot provider (for non AWS deployments)
 * Make helm chart available via official helm repository
-* Provide a CRD driven K8s controller/operator(?)

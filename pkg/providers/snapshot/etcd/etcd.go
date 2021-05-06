@@ -22,7 +22,7 @@ import (
 	"path/filepath"
 	"time"
 
-	etcdsnap "go.etcd.io/etcd/clientv3/snapshot"
+	etcdsnap "go.etcd.io/etcd/etcdutl/v3/snapshot"
 	"go.uber.org/zap"
 
 	"github.com/quentin-m/etcd-cloud-operator/pkg/providers"

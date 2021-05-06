@@ -20,7 +20,6 @@ import (
 	"os"
 	"strings"
 
-	"github.com/coreos/pkg/capnslog"
 	log "github.com/sirupsen/logrus"
 
 	"github.com/quentin-m/etcd-cloud-operator/pkg/tester"
@@ -38,7 +37,6 @@ func main() {
 	log.SetOutput(os.Stdout)
 	log.SetLevel(logLevel)
 	log.SetFormatter(&log.TextFormatter{FullTimestamp: true})
-	capnslog.MustRepoLogger("go.etcd.io/etcd").SetLogLevel(map[string]capnslog.LogLevel{"etcdserver/api/v3rpc": capnslog.CRITICAL})
 
 	// Read configuration.
 	config, err := loadConfig(*flagConfigPath)

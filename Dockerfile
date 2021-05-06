@@ -1,14 +1,14 @@
 #Min version required
 #See: https://github.com/golang/go/issues/29278#issuecomment-447537558
-FROM golang:1.13.3-alpine AS build-env
+FROM golang:1.16-alpine3.12 AS build-env
 
 WORKDIR /go/src/github.com/quentin-m/etcd-cloud-operator
 
-# Install & Cache dependencies
-RUN apk add --no-cache git curl gcc musl-dev
+# Install & cache dependencies
+RUN apk add --no-cache git curl gcc musl-dev ca-certificates openssl wget
+RUN update-ca-certificates
 
-RUN apk add --update openssl && \
-    wget https://github.com/coreos/etcd/releases/download/v3.4.13/etcd-v3.4.13-linux-amd64.tar.gz -O /tmp/etcd.tar.gz && \
+RUN wget https://github.com/etcd-io/etcd/releases/download/v3.5.0-alpha.0/etcd-v3.5.0-alpha.0-linux-amd64.tar.gz -O /tmp/etcd.tar.gz && \
     mkdir /etcd && \
     tar xzvf /tmp/etcd.tar.gz -C /etcd --strip-components=1 && \
     rm /tmp/etcd.tar.gz

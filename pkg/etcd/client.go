@@ -62,7 +62,7 @@ func NewClient(clientsAddresses []string, sc SecurityConfig, autoSync bool) (*Cl
 		DialTimeout:      defaultDialTimeout,
 		TLS:              tc,
 		AutoSyncInterval: autoSyncInterval,
-		LogConfig:        logger.BuildZapConfig(logger.GetZapLogLevelFromLogrus().String()),
+		LogConfig:        logger.Config,
 	})
 	if err != nil {
 		return nil, err

@@ -19,15 +19,16 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
+	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"strings"
 	"time"
 
-	"github.com/quentin-m/etcd-cloud-operator/pkg/etcd"
-	log "github.com/sirupsen/logrus"
-	"go.etcd.io/etcd/client/v3"
 	"go.etcd.io/etcd/api/v3/v3rpc/rpctypes"
-	"gopkg.in/yaml.v2"
+	"go.etcd.io/etcd/client/v3"
+	"go.uber.org/zap"
+
+	"github.com/quentin-m/etcd-cloud-operator/pkg/etcd"
 )
 
 const (
@@ -140,25 +141,25 @@ func (s *Operator) reconcileInitACLConfig(config *etcd.ACLConfig) error {
 	defer cancel()
 
 	if err := s.enableACL(ctx, config); err != nil {
-		log.WithError(err).Errorf("failed to enable ACL")
+		zap.S().With(zap.Error(err)).Error("failed to enable ACL")
 		return err
 	}
 
 	oldACLConfig, err := s.getOldACLConfig(ctx)
 	if err != nil {
-		log.WithError(err).Errorf("failed to get old ACL config")
+		zap.S().With(zap.Error(err)).Error("failed to get old ACL config")
 		return err
 	}
 
 	if !oldACLConfig.Equal(config) {
 		if oldACLConfig != nil {
 			if err := s.removeACLConfig(ctx, oldACLConfig); err != nil {
-				log.WithError(err).Errorf("failed to remove ACL config")
+				zap.S().With(zap.Error(err)).Error("failed to remove ACL config")
 				return err
 			}
 		}
 		if err := s.applyACLConfig(ctx, config); err != nil {
-			log.WithError(err).Errorf("failed to apply ACL config")
+			zap.S().With(zap.Error(err)).Error("failed to apply ACL config")
 			return err
 		}
 	}

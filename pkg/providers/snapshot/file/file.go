@@ -23,9 +23,10 @@ import (
 	"sort"
 	"time"
 
+	"go.uber.org/zap"
+
 	"github.com/quentin-m/etcd-cloud-operator/pkg/providers"
 	"github.com/quentin-m/etcd-cloud-operator/pkg/providers/snapshot"
-	log "github.com/sirupsen/logrus"
 )
 
 const filePermissions = 0600
@@ -94,7 +95,7 @@ func (f *file) Info() (*snapshot.Metadata, error) {
 
 		metadata, err := snapshot.NewMetadata(file.Name(), -1, file.Size(), f)
 		if err != nil {
-			log.Warnf("failed to parse metadata for snapshot %v", file.Name())
+			zap.S().Warnf("failed to parse metadata for snapshot %v", file.Name())
 			continue
 		}
 		metadatas = append(metadatas, metadata)
@@ -119,7 +120,7 @@ func (f *file) Purge(ttl time.Duration) error {
 
 	for _, file := range files {
 		if time.Since(file.ModTime()) > ttl {
-			log.Infof("purging snapshot file %q because it is that older than %v", file.Name(), ttl)
+			zap.S().Infof("purging snapshot file %q because it is that older than %v", file.Name(), ttl)
 			os.Remove(filepath.Join(f.config.Dir, file.Name()))
 		}
 	}

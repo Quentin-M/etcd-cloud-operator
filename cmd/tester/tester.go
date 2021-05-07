@@ -18,10 +18,10 @@ package main
 import (
 	"flag"
 	"os"
-	"strings"
 
-	log "github.com/sirupsen/logrus"
+	"go.uber.org/zap"
 
+	"github.com/quentin-m/etcd-cloud-operator/pkg/logger"
 	"github.com/quentin-m/etcd-cloud-operator/pkg/tester"
 )
 
@@ -33,15 +33,12 @@ func main() {
 	flag.Parse()
 
 	// Initialize logging system.
-	logLevel, err := log.ParseLevel(strings.ToUpper(*flagLogLevel))
-	log.SetOutput(os.Stdout)
-	log.SetLevel(logLevel)
-	log.SetFormatter(&log.TextFormatter{FullTimestamp: true})
+	logger.Configure(*flagLogLevel)
 
 	// Read configuration.
 	config, err := loadConfig(*flagConfigPath)
 	if err != nil {
-		log.WithError(err).Fatal("failed to load configuration")
+		zap.S().With(zap.Error(err)).Fatal("failed to load configuration")
 	}
 
 	// Run.

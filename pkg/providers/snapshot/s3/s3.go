@@ -28,7 +28,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	ss3 "github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
-	log "github.com/sirupsen/logrus"
+	"go.uber.org/zap"
 
 	"github.com/quentin-m/etcd-cloud-operator/pkg/providers"
 	"github.com/quentin-m/etcd-cloud-operator/pkg/providers/snapshot"
@@ -102,7 +102,7 @@ func (s *s3) Save(r io.ReadCloser, metadata *snapshot.Metadata) error {
 		Key:    aws.String(key),
 	})
 	if err != nil {
-		log.WithError(err).Warnf("failed to get aws s3 object size for %q")
+		zap.S().With(zap.Error(err)).Warnf("failed to get aws s3 object size for %q")
 		return nil
 	}
 
@@ -152,7 +152,7 @@ func (s *s3) Info() (*snapshot.Metadata, error) {
 	for _, obj := range resp.Contents {
 		metadata, err := snapshot.NewMetadata(*obj.Key, -1, *obj.Size, s)
 		if err != nil {
-			log.Warnf("failed to parse metadata for snapshot %v", *obj.Key)
+			zap.S().Warnf("failed to parse metadata for snapshot %v", *obj.Key)
 			continue
 		}
 		metadatas = append(metadatas, metadata)
@@ -179,14 +179,14 @@ func (s *s3) Purge(ttl time.Duration) error {
 
 	for _, item := range resp.Contents {
 		if time.Since(*item.LastModified) > ttl {
-			log.Infof("purging snapshot file %q because it is that older than %v", *item.Key, ttl)
+			zap.S().Infof("purging snapshot file %q because it is that older than %v", *item.Key, ttl)
 
 			_, err := s3s.DeleteObject(&ss3.DeleteObjectInput{
 				Bucket: aws.String(s.config.Bucket),
 				Key:    item.Key,
 			})
 			if err != nil {
-				log.WithError(err).Warn("failed to remove aws s3 object")
+				zap.S().With(zap.Error(err)).Warn("failed to remove aws s3 object")
 			}
 		}
 	}

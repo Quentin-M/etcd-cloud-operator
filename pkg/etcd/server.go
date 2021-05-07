@@ -19,18 +19,14 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"time"
-
-	log "github.com/sirupsen/logrus"
-	"go.uber.org/zap"
 
 	"go.etcd.io/etcd/client/pkg/v3/transport"
 	"go.etcd.io/etcd/client/pkg/v3/types"
 	etcdsnap "go.etcd.io/etcd/etcdutl/v3/snapshot"
 	"go.etcd.io/etcd/server/v3/embed"
-	"google.golang.org/grpc/grpclog"
+	"go.uber.org/zap"
 
 	"github.com/quentin-m/etcd-cloud-operator/pkg/logger"
 	"github.com/quentin-m/etcd-cloud-operator/pkg/providers/snapshot"
@@ -139,7 +135,7 @@ func (c *Server) Join(cluster *Client) error {
 
 	// Attempt to re-join the server directly if we are still a member, and we have local data.
 	if memberID != 0 && localSnapErr == nil {
-		log.Info("attempting to rejoin cluster under existing identity with local data")
+		zap.S().Info("attempting to rejoin cluster under existing identity with local data")
 
 		ctx, cancel := context.WithTimeout(context.Background(), defaultStartRejoinTimeout)
 		defer cancel()
@@ -147,9 +143,9 @@ func (c *Server) Join(cluster *Client) error {
 			return nil
 		}
 
-		log.Warn("failed to join as an existing member, resetting")
+		zap.S().Warn("failed to join as an existing member, resetting")
 		if err := cluster.RemoveMember(c.cfg.Name, memberID); err != nil {
-			log.WithError(err).Warning("failed to remove ourselves from the cluster's member list")
+			zap.S().With(zap.Error(err)).Warn("failed to remove ourselves from the cluster's member list")
 		}
 	}
 	os.RemoveAll(c.cfg.DataDir)
@@ -172,7 +168,7 @@ func (c *Server) Join(cluster *Client) error {
 }
 
 func (c *Server) Restore(metadata *snapshot.Metadata) error {
-	log.Infof("restoring snapshot %q (rev: %016x, size: %.3f MB)", metadata.Name, metadata.Revision, toMB(metadata.Size))
+	zap.S().Infof("restoring snapshot %q (rev: %016x, size: %.3f MB)", metadata.Name, metadata.Revision, toMB(metadata.Size))
 
 	path, shouldDelete, err := metadata.Source.Get(metadata)
 	if err != nil && err != snapshot.ErrNoSnapshot {
@@ -218,14 +214,14 @@ func (c *Server) Snapshot() error {
 		minRev = metadata.Revision
 	} else {
 		if err != snapshot.ErrNoSnapshot {
-			log.WithError(err).Warn("failed to find latest snapshot revision, snapshotting anyways")
+			zap.S().With(zap.Error(err)).Warn("failed to find latest snapshot revision, snapshotting anyways")
 		}
 	}
 
 	// Initiate a snapshot.
 	rc, rev, err := c.snapshot(minRev)
 	if err == ErrMemberRevisionTooOld {
-		log.Infof("skipping snapshot: current revision %016x <= latest snapshot %016x", rev, minRev)
+		zap.S().Infof("skipping snapshot: current revision %016x <= latest snapshot %016x", rev, minRev)
 		return nil
 	}
 	if err != nil {
@@ -239,7 +235,7 @@ func (c *Server) Snapshot() error {
 		return fmt.Errorf("failed to save snapshot: %v", err)
 	}
 
-	log.Infof("snapshot %q saved successfully in %v (%.2f MB)", metadata.Filename(), time.Since(t), toMB(metadata.Size))
+	zap.S().Infof("snapshot %q saved successfully in %v (%.2f MB)", metadata.Filename(), time.Since(t), toMB(metadata.Size))
 	return nil
 }
 
@@ -251,14 +247,14 @@ func (c *Server) SnapshotInfo() (*snapshot.Metadata, error) {
 	if !c.isRunning {
 		localSnap, localErr = localSnapshotProvider(c.cfg.DataDir).Info()
 		if localErr != nil && localErr != snapshot.ErrNoSnapshot {
-			log.WithError(localErr).Warn("failed to retrieve local snapshot info")
+			zap.S().With(zap.Error(localErr)).Warn("failed to retrieve local snapshot info")
 		}
 	}
 
 	// Read snapshot info from the configured snapshot provider.
 	cfgSnap, cfgErr = c.cfg.SnapshotProvider.Info()
 	if cfgErr != nil && cfgErr != snapshot.ErrNoSnapshot {
-		log.WithError(cfgErr).Warn("failed to retrieve snapshot info")
+		zap.S().With(zap.Error(cfgErr)).Warn("failed to retrieve snapshot info")
 	}
 
 	// Return the highest revision one, or the one that worked.
@@ -289,12 +285,12 @@ func (c *Server) snapshot(minRevision int64) (io.ReadCloser, int64, error) {
 		// Forward the snapshot to the pipe.
 		n, err := snapshot.WriteTo(pw)
 		if err != nil {
-			log.WithError(err).Errorf("failed to write etcd snapshot out [written bytes: %d]", n)
+			zap.S().With(zap.Error(err)).Errorf("failed to write etcd snapshot out [written bytes: %d]", n)
 		}
 		pw.CloseWithError(err)
 
 		if err := snapshot.Close(); err != nil {
-			log.WithError(err).Errorf("failed to close etcd snapshot [written bytes: %d]", n)
+			zap.S().With(zap.Error(err)).Errorf("failed to close etcd snapshot [written bytes: %d]", n)
 		}
 	}()
 
@@ -311,7 +307,7 @@ func (c *Server) Stop(graceful, snapshot bool) {
 	}
 	if snapshot {
 		if err := c.Snapshot(); err != nil {
-			log.WithError(err).Error("failed to snapshot before graceful stop")
+			zap.S().With(zap.Error(err)).Error("failed to snapshot before graceful stop")
 		}
 	}
 	if !graceful {
@@ -347,7 +343,8 @@ func (c *Server) startServer(ctx context.Context) error {
 	etcdCfg.AutoCompactionMode = c.cfg.AutoCompactionMode
 	etcdCfg.AutoCompactionRetention = c.cfg.AutoCompactionRetention
 	etcdCfg.ZapLoggerBuilder = logger.BuildZapConfigBuilder()
-	etcdCfg.LogLevel = logger.GetZapLogLevelFromLogrus().String()
+	etcdCfg.LogLevel = logger.Config.Level.String()
+	etcdCfg.LogOutputs = []string{embed.StdOutLogOutput}
 	etcdCfg.SocketOpts = transport.SocketOpts{
 		ReusePort:    true,
 		ReuseAddress: true,
@@ -362,15 +359,11 @@ func (c *Server) startServer(ctx context.Context) error {
 
 	// Start the server.
 	c.server, err = embed.StartEtcd(etcdCfg)
-
-	// Discard the gRPC logs, as the embed server will set that regardless of what was set before (i.e. at startup).
-	grpclog.SetLoggerV2(grpclog.NewLoggerV2(ioutil.Discard, ioutil.Discard, os.Stderr))
-
 	if err != nil {
 		return fmt.Errorf("failed to start etcd: %s", err)
 	}
 	c.isRunning = true
-	log.Infof("embedded etcd server is now running")
+	zap.S().Infof("embedded etcd server is now running")
 
 	// Wait until the server announces its ready, or until the start timeout is exceeded.
 	//
@@ -401,11 +394,11 @@ func (c *Server) startServer(ctx context.Context) error {
 func (c *Server) runErrorWatcher() {
 	select {
 	case <-c.server.Server.StopNotify():
-		log.Warnf("etcd server is stopping")
+		zap.S().Warnf("etcd server is stopping")
 		c.isRunning = false
 		return
 	case <-c.server.Err():
-		log.Warnf("etcd server has crashed")
+		zap.S().Warnf("etcd server has crashed")
 		c.Stop(false, false)
 	}
 }
@@ -455,18 +448,18 @@ func (c *Server) runMemberCleaner() {
 			if time.Since(member.lastSeenHealthy) < c.cfg.UnhealthyMemberTTL {
 				continue
 			}
-			log.Infof("removing member %q that's been unhealthy for %v", member.name, c.cfg.UnhealthyMemberTTL)
+			zap.S().Infof("removing member %q that's been unhealthy for %v", member.name, c.cfg.UnhealthyMemberTTL)
 
 			cl, err := NewClient([]string{c.cfg.PrivateAddress}, c.cfg.ClientSC, false)
 			if err != nil {
-				log.WithError(err).Warn("failed to create etcd cluster client")
+				zap.S().With(zap.Error(err)).Warn("failed to create etcd cluster client")
 				continue
 			}
 			if err := cl.RemoveMember(member.name, uint64(id)); err == context.DeadlineExceeded {
-				log.Warnf("failed to remove unhealthy member %q, it might be starting", member.name)
+				zap.S().Warnf("failed to remove unhealthy member %q, it might be starting", member.name)
 				continue
 			} else if err != nil {
-				log.WithError(err).Warnf("failed to remove unhealthy member %q", member.name)
+				zap.S().With(zap.Error(err)).Warnf("failed to remove unhealthy member %q", member.name)
 				continue
 			}
 
@@ -477,7 +470,7 @@ func (c *Server) runMemberCleaner() {
 
 func (c *Server) runSnapshotter() {
 	if c.cfg.SnapshotProvider == nil || c.cfg.SnapshotInterval == 0 {
-		log.Warn("periodic snapshots are disabled")
+		zap.S().Warn("periodic snapshots are disabled")
 		return
 	}
 
@@ -491,7 +484,7 @@ func (c *Server) runSnapshotter() {
 		}
 
 		if err := c.Snapshot(); err != nil {
-			log.WithError(err).Error("failed to snapshot")
+			zap.S().With(zap.Error(err)).Error("failed to snapshot")
 		}
 	}
 }

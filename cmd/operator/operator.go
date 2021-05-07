@@ -17,13 +17,9 @@ package main
 
 import (
 	"flag"
-	"io/ioutil"
 	"os"
-	"strings"
 
-	log "github.com/sirupsen/logrus"
 	"go.uber.org/zap"
-	"google.golang.org/grpc/grpclog"
 
 	"github.com/quentin-m/etcd-cloud-operator/pkg/logger"
 	"github.com/quentin-m/etcd-cloud-operator/pkg/operator"
@@ -44,18 +40,12 @@ func main() {
 	flag.Parse()
 
 	// Initialize logging system.
-	logLevel, err := log.ParseLevel(strings.ToUpper(*flagLogLevel))
-	log.SetOutput(os.Stdout)
-	log.SetLevel(logLevel)
-	log.SetFormatter(&log.TextFormatter{FullTimestamp: true})
-
-	grpclog.SetLoggerV2(grpclog.NewLoggerV2(ioutil.Discard, ioutil.Discard, os.Stderr))
-	zap.ReplaceGlobals(logger.BuildZapLogger(*flagLogLevel))
+	logger.Configure(*flagLogLevel)
 
 	// Read configuration.
 	config, err := loadConfig(*flagConfigPath)
 	if err != nil {
-		log.WithError(err).Fatal("failed to load configuration")
+		zap.S().With(zap.Error(err)).Fatal("failed to load configuration")
 	}
 
 	// Run.

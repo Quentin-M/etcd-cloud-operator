@@ -19,7 +19,7 @@ import (
 	"errors"
 	"time"
 
-	log "github.com/sirupsen/logrus"
+	"go.uber.org/zap"
 
 	"github.com/quentin-m/etcd-cloud-operator/pkg/etcd"
 )
@@ -47,7 +47,7 @@ func Run(cfg Config) {
 		false,
 	)
 	if err != nil {
-		log.WithError(err).Fatal("failed to create etcd cluster client")
+		zap.S().With(zap.Error(err)).Fatal("failed to create etcd cluster client")
 	}
 	defer c.Close()
 
@@ -58,12 +58,12 @@ func Run(cfg Config) {
 
 	// Compact and defrag the cluster up to this point.
 	if err := c.Cleanup(); err != nil {
-		log.WithError(err).Fatal("failed to compact/defrag the cluster")
+		zap.S().With(zap.Error(err)).Fatal("failed to compact/defrag the cluster")
 	}
 }
 
 func runTest(testCase testCase, client *etcd.Client, cfg Config, dm *dataMarker) {
-	log.Infof("starting test %q", testCase.name)
+	zap.S().Infof("starting test %q", testCase.name)
 
 	promSetRunningTest(testCase.name)
 	defer promSetRunningTest("")
@@ -71,18 +71,18 @@ func runTest(testCase testCase, client *etcd.Client, cfg Config, dm *dataMarker)
 
 	// Compact and defrag the cluster up to this point, and set a data marker.
 	if err := client.Cleanup(); err != nil {
-		log.WithError(err).Warning("failed to compact/defrag the cluster, next test might be affected")
+		zap.S().With(zap.Error(err)).Warn("failed to compact/defrag the cluster, next test might be affected")
 	}
 
 	if err := dm.setMarker(); err != nil {
-		log.WithError(err).Warning("failed to put data marker, skipping test")
+		zap.S().With(zap.Error(err)).Warn("failed to put data marker, skipping test")
 		return
 	}
 
 	// Verify that the cluster is healthy in the first place, and get the current leader.
 	leaderID, err := isHealthy(client, cfg.Cluster.Size)
 	if err != nil {
-		log.WithError(err).Fatal("cluster is unhealthy")
+		zap.S().With(zap.Error(err)).Fatal("cluster is unhealthy")
 	}
 
 	// Start stressing the cluster.
@@ -95,7 +95,7 @@ func runTest(testCase testCase, client *etcd.Client, cfg Config, dm *dataMarker)
 	promSetInjectedFailure(testCase.name)
 
 	if err := testCase.fi(failureInjectorConfig{client: client, testerConfig: cfg, leaderID: leaderID}); err != nil {
-		log.WithError(err).Warning("failed to inject failure, skipping test")
+		zap.S().With(zap.Error(err)).Warn("failed to inject failure, skipping test")
 		return
 	}
 
@@ -106,7 +106,7 @@ func runTest(testCase testCase, client *etcd.Client, cfg Config, dm *dataMarker)
 	for i := 0; i < 4; i++ {
 		time.Sleep(15 * time.Second)
 		if _, err := isHealthy(client, cfg.Cluster.Size); err != nil {
-			log.WithError(err).Warning("cluster is unhealthy")
+			zap.S().With(zap.Error(err)).Warn("cluster is unhealthy")
 			i = -1
 		}
 	}
@@ -116,10 +116,10 @@ func runTest(testCase testCase, client *etcd.Client, cfg Config, dm *dataMarker)
 
 	// Verify cluster's consistency and the presence of the data marker.
 	if err := client.IsConsistent(); err != nil {
-		log.WithError(err).Fatal("cluster is un-consistent, exiting")
+		zap.S().With(zap.Error(err)).Fatal("cluster is un-consistent, exiting")
 	}
 	if err := dm.verify(testCase.isLossy); err != nil {
-		log.Error(err)
+		zap.S().Error(err)
 	}
 }
 
@@ -148,7 +148,7 @@ func (dm *dataMarker) verify(isLossy bool) error {
 	}
 
 	if !t.Equal(dm.time) {
-		log.Infof("data marker was reset the value it held %v ago", time.Since(t))
+		zap.S().Infof("data marker was reset the value it held %v ago", time.Since(t))
 
 		if !isLossy {
 			return errors.New("failed to verify data marker: unexpected value - cluster might have been restored to an old snapshot unexpectedly")

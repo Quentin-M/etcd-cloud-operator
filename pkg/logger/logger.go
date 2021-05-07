@@ -15,11 +15,16 @@
 package logger
 
 import (
+	"go.etcd.io/etcd/client/pkg/v3/logutil"
+	"go.uber.org/zap/zapgrpc"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/grpclog"
+	"io/ioutil"
 	"moul.io/zapfilter"
+	"os"
 	"regexp"
 	"strings"
 
-	log "github.com/sirupsen/logrus"
 	"go.etcd.io/etcd/server/v3/embed"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -27,9 +32,42 @@ import (
 
 var lbConnEOF = regexp.MustCompile(`embed: rejected connection from "[^"]*" \(error "EOF", ServerName ""\)`)
 
-// BuildZapLogger builds a full zap.Logger that can be used in the server.
-func BuildZapLogger(lvl string) *zap.Logger {
-	zl, err := BuildZapConfig(lvl).Build(zap.WrapCore(func (z zapcore.Core) zapcore.Core {
+var Config *zap.Config
+var Logger *zap.Logger
+
+func Configure(lvl string) {
+	// Build logger configuration
+	buildZapLogger(lvl)
+
+	zap.ReplaceGlobals(Logger)
+	if lvl != "debug" {
+		grpclog.SetLoggerV2(grpclog.NewLoggerV2(ioutil.Discard, ioutil.Discard, os.Stderr))
+	} else {
+		grpc.EnableTracing = true
+		grpclog.SetLoggerV2(zapgrpc.NewLogger(Logger))
+	}
+}
+
+// buildZapLogger builds a *zap.Logger end-to-end based on the specified logging level, and stores the logger alongside
+// his configuration in global variables, so they can be referred to from other libs who configure logging
+// independently.
+func buildZapLogger(lvl string) {
+	if Logger != nil {
+		return
+	}
+
+	// Build configuration, the same way etcd's embed package does it; as it is currently not possible to set a
+	// *zap.Logger directly into embed, and we'd like to be consistent. https://github.com/etcd-io/etcd/issues/12326
+	zlCfg := logutil.DefaultZapLoggerConfig
+	zlCfg.ErrorOutputPaths = []string{"stdout"}
+	zlCfg.OutputPaths = []string{"stdout"}
+	zlCfg.Level = zap.NewAtomicLevelAt(logutil.ConvertToZapLevel(lvl))
+	zlCfg.Development = lvl == "debug"
+	zlCfg.Sampling = nil
+	Config = &zlCfg
+
+	// Build logger.
+	zl, err := Config.Build(zap.WrapCore(func (z zapcore.Core) zapcore.Core {
 		return zapfilter.NewFilteringCore(z, func(e zapcore.Entry, f []zapcore.Field) bool {
 			// Mute ClientV3 hammering broken endpoints, which is common in ECO and bogus LB health checks connections.
 			return !strings.Contains(e.Message, "retrying of unary invoker failed") &&
@@ -37,19 +75,11 @@ func BuildZapLogger(lvl string) *zap.Logger {
 				!lbConnEOF.MatchString(e.Message)})
 	}))
 	if err != nil {
-		log.WithError(err).Fatal("unable to parse zap's logging level")
+		zap.S().With(zap.Error(err)).Fatal("unable to build logger")
 	}
-	return zl
+	Logger = zl
 }
 
-// BuildZapConfig creates a uniform zap.Config for the etcd server & client.
-func BuildZapConfig(lvl string) *zap.Config {
-	zlCfg := zap.NewProductionConfig()
-	zlCfg.Level.UnmarshalText([]byte(lvl))
-	zlCfg.Sampling = nil
-	zlCfg.Encoding = "console"
-	return &zlCfg
-}
 
 // BuildZapConfigBuilder returns a configuration builder for the etcd server.
 //

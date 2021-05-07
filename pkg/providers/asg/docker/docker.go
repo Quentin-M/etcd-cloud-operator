@@ -19,7 +19,7 @@ import (
 	"os"
 	"strings"
 
-	log "github.com/sirupsen/logrus"
+	"go.uber.org/zap"
 
 	"github.com/quentin-m/etcd-cloud-operator/pkg/providers"
 	"github.com/quentin-m/etcd-cloud-operator/pkg/providers/asg"
@@ -69,6 +69,6 @@ func (d *docker) AutoScalingGroupStatus() (instances []asg.Instance, self asg.In
 	}
 	size = d.config.Size
 
-	log.Debugf("Discovered %d / %d replicas: %s", len(instances), d.config.Size, strings.Join(instancesStr, ", "))
+	zap.S().Debugf("Discovered %d / %d replicas: %s", len(instances), d.config.Size, strings.Join(instancesStr, ", "))
 	return
 }

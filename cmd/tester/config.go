@@ -18,7 +18,7 @@ import (
 	"io/ioutil"
 	"os"
 
-	log "github.com/sirupsen/logrus"
+	"go.uber.org/zap"
 	"gopkg.in/yaml.v2"
 
 	"github.com/quentin-m/etcd-cloud-operator/pkg/tester"
@@ -53,6 +53,6 @@ func loadConfig(path string) (config, error) {
 		return config, err
 	}
 
-	log.Infof("loaded configuration file %v", path)
+	zap.S().Infof("loaded configuration file %v", path)
 	return config, err
 }

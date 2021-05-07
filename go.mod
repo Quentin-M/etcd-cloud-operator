@@ -5,7 +5,6 @@ go 1.16
 require (
 	github.com/aws/aws-sdk-go v1.38.34
 	github.com/prometheus/client_golang v1.11.0
-	github.com/sirupsen/logrus v1.7.0
 	go.etcd.io/etcd/api/v3 v3.5.0
 	go.etcd.io/etcd/client/pkg/v3 v3.5.0
 	go.etcd.io/etcd/client/v3 v3.5.0

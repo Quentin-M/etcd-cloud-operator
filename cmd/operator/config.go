@@ -15,15 +15,16 @@
 package main
 
 import (
+	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"os"
 	"time"
 
+	"go.uber.org/zap"
+
 	"github.com/quentin-m/etcd-cloud-operator/pkg/etcd"
 	"github.com/quentin-m/etcd-cloud-operator/pkg/operator"
 	"github.com/quentin-m/etcd-cloud-operator/pkg/providers/snapshot"
-	log "github.com/sirupsen/logrus"
-	"gopkg.in/yaml.v2"
 )
 
 // config represents a YAML configuration file that namespaces all ECO
@@ -86,6 +87,6 @@ func loadConfig(path string) (config, error) {
 		return config, err
 	}
 
-	log.Infof("loaded configuration file %v", path)
+	zap.S().Infof("loaded configuration file %v", path)
 	return config, err
 }

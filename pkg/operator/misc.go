@@ -23,7 +23,7 @@ import (
 	"sync"
 	"time"
 
-	log "github.com/sirupsen/logrus"
+	"go.uber.org/zap"
 
 	"github.com/quentin-m/etcd-cloud-operator/pkg/etcd"
 	"github.com/quentin-m/etcd-cloud-operator/pkg/providers/asg"
@@ -44,14 +44,14 @@ type status struct {
 
 func initProviders(cfg Config) (asg.Provider, snapshot.Provider) {
 	if cfg.ASG.Provider == "" {
-		log.Fatal("no auto-scaling group provider configuration given")
+		zap.S().Fatal("no auto-scaling group provider configuration given")
 	}
 	asgProvider, ok := asg.AsMap()[cfg.ASG.Provider]
 	if !ok {
-		log.Fatalf("unknown auto-scaling group provider %q, available providers: %v", cfg.ASG.Provider, asg.AsList())
+		zap.S().Fatalf("unknown auto-scaling group provider %q, available providers: %v", cfg.ASG.Provider, asg.AsList())
 	}
 	if err := asgProvider.Configure(cfg.ASG); err != nil {
-		log.WithError(err).Fatal("failed to configure auto-scaling group provider")
+		zap.S().With(zap.Error(err)).Fatal("failed to configure auto-scaling group provider")
 	}
 
 	if cfg.Snapshot.Provider == "" {
@@ -59,10 +59,10 @@ func initProviders(cfg Config) (asg.Provider, snapshot.Provider) {
 	}
 	snapshotProvider, ok := snapshot.AsMap()[cfg.Snapshot.Provider]
 	if !ok {
-		log.Fatalf("unknown snapshot provider %q, available providers: %v", cfg.Snapshot.Provider, snapshot.AsList())
+		zap.S().Fatalf("unknown snapshot provider %q, available providers: %v", cfg.Snapshot.Provider, snapshot.AsList())
 	}
 	if err := snapshotProvider.Configure(cfg.Snapshot); err != nil {
-		log.WithError(err).Fatal("failed to configure snapshot provider")
+		zap.S().With(zap.Error(err)).Fatal("failed to configure snapshot provider")
 	}
 
 	return asgProvider, snapshotProvider
@@ -88,7 +88,7 @@ func fetchStatuses(httpClient *http.Client, etcdClient *etcd.Client, asgInstance
 
 			st, err := fetchStatus(httpClient, asgInstance)
 			if err != nil {
-				log.WithError(err).Warnf("failed to query %s's ECO instance", asgInstance.Name())
+				zap.S().With(zap.Error(err)).Warnf("failed to query %s", asgInstance.Name())
 				return
 			}
 

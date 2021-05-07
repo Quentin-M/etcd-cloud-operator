@@ -21,8 +21,9 @@ import (
 	"strconv"
 	"strings"
 
+	"go.uber.org/zap"
+
 	"github.com/quentin-m/etcd-cloud-operator/pkg/providers/asg"
-	log "github.com/sirupsen/logrus"
 )
 
 func init() {
@@ -88,7 +89,7 @@ func (a *sts) Configure(providerConfig asg.Config) (err error) {
 	}
 	a.self.address = fmt.Sprintf("%s.%s.%s.svc.%s", a.self.name, a.serviceName, a.namespace, a.dnsClusterSuffix)
 
-	log.Debugf("Running as %s within Statefulset %s of %d replicas, with headless service %s.%s.svc.%s", a.self.address, a.name, a.replicas, a.serviceName, a.namespace, a.dnsClusterSuffix)
+	zap.S().Debugf("Running as %s within Statefulset %s of %d replicas, with headless service %s.%s.svc.%s", a.self.address, a.name, a.replicas, a.serviceName, a.namespace, a.dnsClusterSuffix)
 	return
 }
 
@@ -104,7 +105,7 @@ func (a *sts) AutoScalingGroupStatus() ([]asg.Instance, asg.Instance, int, error
 		instances = append(instances, &instance)
 		instancesStr = append(instancesStr, instance.address)
 	}
-	log.Debugf("Discovered %d / %d replicas: %s", len(instances), a.replicas, strings.Join(instancesStr, ", "))
+	zap.S().Debugf("Discovered %d / %d replicas: %s", len(instances), a.replicas, strings.Join(instancesStr, ", "))
 
 	return instances, &a.self, a.replicas, nil
 }

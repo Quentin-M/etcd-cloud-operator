@@ -24,7 +24,7 @@ import (
 	"syscall"
 	"time"
 
-	log "github.com/sirupsen/logrus"
+	"go.uber.org/zap"
 
 	"github.com/quentin-m/etcd-cloud-operator/pkg/etcd"
 	"github.com/quentin-m/etcd-cloud-operator/pkg/providers/asg"
@@ -79,7 +79,7 @@ func New(cfg Config) *Operator {
 	// Initialize providers.
 	asgProvider, snapshotProvider := initProviders(cfg)
 	if snapshotProvider == nil || cfg.Snapshot.Interval == 0 {
-		log.Fatal("snapshots must be enabled for disaster recovery")
+		zap.S().Fatal("snapshots must be enabled for disaster recovery")
 	}
 
 	// Setup signal handler.
@@ -102,12 +102,12 @@ func (s *Operator) Run() {
 
 	for {
 		if err := s.evaluate(); err != nil {
-			log.WithError(err).Warn("could not evaluate cluster state")
+			zap.S().With(zap.Error(err)).Warn("could not evaluate cluster state")
 			s.wait()
 			continue
 		}
 		if err := s.execute(); err != nil {
-			log.WithError(err).Warn("could not execute action")
+			zap.S().With(zap.Error(err)).Warn("could not execute action")
 		}
 		s.wait()
 	}
@@ -123,7 +123,7 @@ func (s *Operator) evaluate() error {
 	// Create the etcd cluster client.
 	client, err := etcd.NewClient(instancesAddresses(asgInstances), s.cfg.Etcd.ClientTransportSecurity, true)
 	if err != nil {
-		log.WithError(err).Warn("failed to create etcd cluster client")
+		zap.S().With(zap.Error(err)).Warn("failed to create etcd cluster client")
 	}
 
 	// Output.
@@ -149,7 +149,7 @@ func (s *Operator) execute() error {
 	switch {
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	case s.shutdown:
-		log.Info("STATUS: Received SIGTERM -> Snapshot + Stop")
+		zap.S().Info("STATUS: Received SIGTERM -> Snapshot + Stop")
 		s.state = "PENDING"
 
 		s.server.Stop(s.etcdHealthy, true)
@@ -157,23 +157,23 @@ func (s *Operator) execute() error {
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	case s.etcdHealthy && !s.etcdRunning:
-		log.Info("STATUS: Healthy + Not running -> Join")
+		zap.S().Info("STATUS: Healthy + Not running -> Join")
 		s.state = "PENDING"
 
 		if err := s.server.Join(s.etcdClient); err != nil {
-			log.WithError(err).Error("failed to join the cluster")
+			zap.S().With(zap.Error(err)).Error("failed to join the cluster")
 		}
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	case s.etcdHealthy && s.etcdRunning:
-		log.Info("STATUS: Healthy + Running -> Standby")
+		zap.S().Info("STATUS: Healthy + Running -> Standby")
 		s.state = "OK"
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	case !s.etcdHealthy && s.etcdRunning && s.states["OK"] >= s.clusterSize/2+1:
-		log.Info("STATUS: Unhealthy + Running -> Pending confirmation from other ECO instances")
+		zap.S().Info("STATUS: Unhealthy + Running -> Pending confirmation from other ECO instances")
 		s.state = "PENDING"
 	case !s.etcdHealthy && s.etcdRunning && s.states["OK"] < s.clusterSize/2+1:
-		log.Info("STATUS: Unhealthy + Running + No quorum -> Snapshot + Stop")
+		zap.S().Info("STATUS: Unhealthy + Running + No quorum -> Snapshot + Stop")
 		s.state = "PENDING"
 
 		s.server.Stop(false, true)
@@ -186,15 +186,15 @@ func (s *Operator) execute() error {
 				return err
 			}
 		}
-		log.Info("STATUS: Unhealthy + Not running -> Ready to start + Pending all ready / seeder")
+		zap.S().Info("STATUS: Unhealthy + Not running -> Ready to start + Pending all ready / seeder")
 		s.state = "START"
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	case !s.etcdHealthy && !s.etcdRunning && s.states["START"] == s.clusterSize && s.isSeeder:
-		log.Info("STATUS: Unhealthy + Not running + All ready + Seeder status -> Seeding cluster")
+		zap.S().Info("STATUS: Unhealthy + Not running + All ready + Seeder status -> Seeding cluster")
 		s.state = "START"
 
 		if err := s.server.Seed(s.etcdSnapshot); err != nil {
-			log.WithError(err).Error("failed to seed the cluster")
+			zap.S().With(zap.Error(err)).Error("failed to seed the cluster")
 		}
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -206,7 +206,7 @@ func (s *Operator) execute() error {
 
 	if s.state == "OK" && s.isSeeder && s.cfg.Etcd.InitACL != nil {
 		if err := s.reconcileInitACLConfig(s.cfg.Etcd.InitACL); err != nil {
-			log.WithError(err).Error("failed to reconcile initial ACL config")
+			zap.S().With(zap.Error(err)).Error("failed to reconcile initial ACL config")
 			return err
 		}
 	}
@@ -222,14 +222,14 @@ func (s *Operator) webserver() {
 		}
 		b, err := json.Marshal(&st)
 		if err != nil {
-			log.WithError(err).Warn("failed to marshal status")
+			zap.S().With(zap.Error(err)).Warn("failed to marshal status")
 			return
 		}
 		if _, err := w.Write(b); err != nil {
-			log.WithError(err).Warn("failed to write status")
+			zap.S().With(zap.Error(err)).Warn("failed to write status")
 		}
 	})
-	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", webServerPort), nil))
+	zap.S().Fatal(http.ListenAndServe(fmt.Sprintf(":%d", webServerPort), nil))
 }
 
 func (s *Operator) wait() {

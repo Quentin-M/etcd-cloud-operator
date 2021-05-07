@@ -67,7 +67,8 @@ type Operator struct {
 
 // Config is the global configuration for an instance of ECO.
 type Config struct {
-	UnhealthyMemberTTL time.Duration `yaml:"unhealthy-member-ttl"`
+	CheckInterval        time.Duration `yaml:"check-interval"`
+	UnhealthyMemberTTL 	 time.Duration `yaml:"unhealthy-member-ttl"`
 
 	Etcd     etcd.EtcdConfiguration `yaml:"etcd"`
 	ASG      asg.Config             `yaml:"asg"`
@@ -78,7 +79,7 @@ func New(cfg Config) *Operator {
 	// Initialize providers.
 	asgProvider, snapshotProvider := initProviders(cfg)
 	if snapshotProvider == nil || cfg.Snapshot.Interval == 0 {
-		log.Fatal("snapshots must be enabled for auto disaster recovery")
+		log.Fatal("snapshots must be enabled for disaster recovery")
 	}
 
 	// Setup signal handler.
@@ -91,7 +92,7 @@ func New(cfg Config) *Operator {
 		snapshotProvider: snapshotProvider,
 		httpClient:       &http.Client{Timeout: isHealthyTimeout},
 		state:            "UNKNOWN",
-		ticker:           time.NewTicker(loopInterval),
+		ticker:           time.NewTicker(cfg.CheckInterval),
 		shutdownChan:     shutdownChan,
 	}
 }

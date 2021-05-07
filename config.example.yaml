@@ -3,9 +3,6 @@ eco:
   check-interval: 15s
   # The time after which, an unhealthy member will be removed from the cluster.
   unhealthy-member-ttl: 30s
-  # Defines whether the operator will attempt to seed a new cluster from a
-  # snapshot after the managed cluster has lost quorum.
-  auto-disaster-recovery: true
   # Configuration of the etcd instance.
   etcd:
     # The address that clients should use to connect to the etcd cluster (i.e.

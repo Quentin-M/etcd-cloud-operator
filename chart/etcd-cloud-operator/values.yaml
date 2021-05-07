@@ -28,7 +28,6 @@ setupProbe:
 config:
   checkInterval: 15s
   unhealthyMemberTTL: 5m
-  autoDisasterRecovery: true
   etcd:
     dataDir: /var/lib/etcd
     clientTransportSecurity:

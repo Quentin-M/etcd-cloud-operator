@@ -1,7 +1,6 @@
 eco:
   check-interval: 5s
   unhealthy-member-ttl: 30s
-  auto-disaster-recovery: true
   etcd:
     advertise-address:
     data-dir: /var/lib/etcd

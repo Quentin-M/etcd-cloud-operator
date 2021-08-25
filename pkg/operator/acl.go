@@ -213,6 +213,14 @@ func (s *Operator) enableACL(ctx context.Context, config *etcd.ACLConfig) error 
 		return err
 	}
 
+	if _, err := s.etcdClient.UserAddWithOptions(ctx, "etcd", "", &clientv3.UserAddOptions{NoPassword: true}); err != nil {
+			return err
+	}
+
+	if _, err := s.etcdClient.UserGrantRole(ctx, "etcd", "root"); err != nil {
+			return err
+	}
+
 	if _, err := s.etcdClient.AuthEnable(ctx); err != nil {
 		return err
 	}

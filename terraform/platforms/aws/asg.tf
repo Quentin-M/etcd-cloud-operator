@@ -64,6 +64,14 @@ resource "aws_autoscaling_group" "main" {
   vpc_zone_identifier  = var.subnets_ids
   launch_configuration = aws_launch_configuration.main.name
 
+  dynamic "instance_refresh" {
+    for_each = var.instance_refresh_enabled ? [1] : []
+
+    content {
+      strategy = "Rolling"
+    }
+  }
+
   tags = [
     {
       key                 = "Name"

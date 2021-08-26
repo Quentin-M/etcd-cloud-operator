@@ -87,3 +87,9 @@ variable "extra_tags" {
   description = "Extra tags to associated with any AWS resources."
   default     = {}
 }
+
+variable "instance_refresh_enabled" {
+  type = bool
+  description = "Defines whether the ASG gets an automated rolling update strategy for refreshing instances"
+  default = false
+}

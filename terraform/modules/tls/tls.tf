@@ -75,7 +75,7 @@ resource "tls_cert_request" "clients-server" {
     organization = "etcd"
   }
 
-  dns_names = [var.common_name]
+  dns_names = concat([var.common_name], var.san_dns_names)
 }
 
 resource "tls_locally_signed_cert" "clients-server" {

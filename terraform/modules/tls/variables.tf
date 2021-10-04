@@ -25,6 +25,11 @@ variable "common_name" {
   description = "Defines the common name for the clients_server certificate."
 }
 
+variable "san_dns_names" {
+  description = "List of additional DNS names for which the server certificate has to be trusted"
+  type        = list(string)
+}
+
 variable "generate_clients_cert" {
   description = "Defines whether additional clients certificates should be generated in addition to server certificates"
 }

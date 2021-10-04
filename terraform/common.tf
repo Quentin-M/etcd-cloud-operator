@@ -188,6 +188,10 @@ variable "jwt_ttl" {
   default     = "10m"
 }
 
+variable "san_dns_names" {
+  description = "List of additional DNS names for which the server certificate has to be trusted"
+  default     = []
+}
 // Modules.
 
 module "tls" {
@@ -196,6 +200,7 @@ module "tls" {
   enabled               = var.eco_enable_tls
   ca                    = var.ca
   common_name           = local.advertise_address
+  san_dns_names         = var.san_dns_names
   generate_clients_cert = var.eco_require_client_certs
 
   eco_init_acl_users = var.eco_init_acl_users

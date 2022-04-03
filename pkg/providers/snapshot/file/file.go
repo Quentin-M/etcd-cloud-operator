@@ -55,7 +55,7 @@ func (f *file) Configure(providerConfig snapshot.Config) error {
 }
 
 func (f *file) Save(r io.ReadCloser, metadata *snapshot.Metadata) error {
-	tmpF, err := ioutil.TempFile("", metadata.Filename())
+	tmpF, err := ioutil.TempFile(f.config.Dir, metadata.Filename())
 	if err != nil {
 		return err
 	}

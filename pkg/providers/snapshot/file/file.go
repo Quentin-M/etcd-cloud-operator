@@ -29,7 +29,10 @@ import (
 	"github.com/quentin-m/etcd-cloud-operator/pkg/providers/snapshot"
 )
 
-const filePermissions = 0600
+const (
+	filePermissions     = 0600
+	directoryPermission = 0700
+)
 
 func init() {
 	snapshot.Register("file", &file{})
@@ -48,7 +51,7 @@ func (f *file) Configure(providerConfig snapshot.Config) error {
 	if err := providers.ParseParams(providerConfig.Params, &f.config); err != nil {
 		return fmt.Errorf("invalid configuration: %v", err)
 	}
-	if err := os.MkdirAll(f.config.Dir, filePermissions); err != nil {
+	if err := os.MkdirAll(f.config.Dir, directoryPermission); err != nil {
 		return fmt.Errorf("invalid configuration: failed to create directory %q: %v", f.config.Dir, err)
 	}
 	return nil

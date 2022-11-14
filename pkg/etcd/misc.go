@@ -49,6 +49,7 @@ type EtcdConfiguration struct {
 	AutoCompactionRetention string              `yaml:"auto-compaction-retention"`
 	InitACL                 *ACLConfig          `yaml:"init-acl,omitempty"`
 	JWTAuthTokenConfig      *JWTAuthTokenConfig `yaml:"jwt-auth-token-config,omitempty"`
+	MaxRequestBytes         uint                `yaml:"max-request-bytes,omitempty"`
 }
 
 type SecurityConfig struct {

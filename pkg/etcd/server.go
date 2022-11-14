@@ -59,6 +59,7 @@ type ServerConfig struct {
 	UnhealthyMemberTTL      time.Duration
 	AutoCompactionMode      string
 	AutoCompactionRetention string
+	MaxRequestBytes         uint
 
 	// Optional, used in {Seed, Join} to periodically save snapshots.
 	SnapshotProvider snapshot.Provider
@@ -355,6 +356,9 @@ func (c *Server) startServer(ctx context.Context) error {
 			c.cfg.JWTAuthTokenConfig.PublicKeyFile,
 			c.cfg.JWTAuthTokenConfig.SignMethod,
 			c.cfg.JWTAuthTokenConfig.TTL)
+	}
+	if c.cfg.MaxRequestBytes != 0 {
+		etcdCfg.MaxRequestBytes = c.cfg.MaxRequestBytes
 	}
 
 	// Start the server.

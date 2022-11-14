@@ -12,6 +12,7 @@ eco:
       peer-client-cert-auth: false
     auto-compaction-mode: periodic
     auto-compaction-retention: "0"
+    max-request-bytes: 4194304
   asg:
     provider: docker
     size: 3

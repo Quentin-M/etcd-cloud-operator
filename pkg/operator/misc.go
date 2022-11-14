@@ -123,7 +123,7 @@ func fetchStatuses(httpClient *http.Client, etcdClient *etcd.Client, asgInstance
 func fetchStatus(httpClient *http.Client, instance asg.Instance) (*status, error) {
 	var st = status{
 		instance: instance,
-		State: "UNKNOWN",
+		State:    "UNKNOWN",
 		Revision: 0,
 	}
 
@@ -149,7 +149,7 @@ func serverConfig(cfg Config, asgSelf asg.Instance, snapshotProvider snapshot.Pr
 		DataQuota:               cfg.Etcd.BackendQuota,
 		AutoCompactionMode:      cfg.Etcd.AutoCompactionMode,
 		AutoCompactionRetention: cfg.Etcd.AutoCompactionRetention,
-		BindAddress:			 asgSelf.BindAddress(),
+		BindAddress:             asgSelf.BindAddress(),
 		PublicAddress:           stringOverride(asgSelf.Address(), cfg.Etcd.AdvertiseAddress),
 		PrivateAddress:          asgSelf.Address(),
 		ClientSC:                cfg.Etcd.ClientTransportSecurity,
@@ -159,6 +159,7 @@ func serverConfig(cfg Config, asgSelf asg.Instance, snapshotProvider snapshot.Pr
 		SnapshotInterval:        cfg.Snapshot.Interval,
 		SnapshotTTL:             cfg.Snapshot.TTL,
 		JWTAuthTokenConfig:      cfg.Etcd.JWTAuthTokenConfig,
+		MaxRequestBytes:         cfg.Etcd.MaxRequestBytes,
 	}
 }
 

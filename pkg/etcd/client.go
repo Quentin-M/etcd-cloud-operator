@@ -244,7 +244,7 @@ func (c *Client) IsConsistent() error {
 		return nil
 	}
 
-	return fmt.Errorf("cluster is unconsistent: [revisions: %v] and [hashes: %v]", revs, hashes)
+	return fmt.Errorf("cluster is inconsistent: [revisions: %v] and [hashes: %v]", revs, hashes)
 }
 
 func (c *Client) GetRevisionsHashes() (map[string]int64, map[string]int64, error) {

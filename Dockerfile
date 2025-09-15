@@ -1,6 +1,6 @@
 #Min version required
 #See: https://github.com/golang/go/issues/29278#issuecomment-447537558
-FROM golang:1.22.3-alpine3.20 AS build-env
+FROM golang:1.25-alpine3.22 AS build-env
 
 WORKDIR /go/src/github.com/quentin-m/etcd-cloud-operator
 
@@ -15,7 +15,7 @@ ENV GO111MODULE=on
 COPY go.* .
 RUN go mod download
 
-FROM build-env as builder
+FROM build-env AS builder
 COPY . .
 RUN go install github.com/quentin-m/etcd-cloud-operator/cmd/operator
 RUN go install github.com/quentin-m/etcd-cloud-operator/cmd/tester
@@ -27,8 +27,8 @@ RUN apk add --no-cache ca-certificates docker-cli
 RUN update-ca-certificates
 COPY --from=builder /go/bin/operator /operator
 COPY --from=builder /go/bin/tester /tester
-COPY --link --from=gcr.io/etcd-development/etcd:v3.5.14 /usr/local/bin/etcdctl /usr/local/bin/etcdctl
-COPY --link --from=gcr.io/etcd-development/etcd:v3.5.14 /usr/local/bin/etcdutl /usr/local/bin/etcdutl
+COPY --link --from=gcr.io/etcd-development/etcd:v3.6.4 /usr/local/bin/etcdctl /usr/local/bin/etcdctl
+COPY --link --from=gcr.io/etcd-development/etcd:v3.6.4 /usr/local/bin/etcdutl /usr/local/bin/etcdutl
 
 
 ENTRYPOINT ["/operator"]
